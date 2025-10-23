@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     # Local apps
     'apps.core',
     'apps.hotels',
+    'apps.guests',
 ]
 
 MIDDLEWARE = [
@@ -138,3 +139,6 @@ SPECTACULAR_SETTINGS = {
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
 }
+
+# Field-level encryption key for custom EncryptedCharField
+FIELD_ENCRYPTION_KEY = env('FIELD_ENCRYPTION_KEY')
