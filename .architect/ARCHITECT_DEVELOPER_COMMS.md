@@ -350,6 +350,38 @@ Architect adds guidance/clarifications here
 
 Developer can drop quick updates here without waiting for architect review:
 
+### [DEVELOPER] 2025-10-22 23:55 - Phase 3 BLOCKER: Encryption Library Compatibility
+**Status**: ⚠️ BLOCKER - Need architect guidance
+**Progress**: Guest model 90% complete, 12 tests written (TDD)
+**Issue**: Django 5.0 encryption library incompatibility
+
+**Attempted Solutions**:
+1. ❌ django-cryptography (1.1) - ImportError: `baseconv` removed in Django 4.0
+2. ❌ django-fernet-fields (0.6) - ImportError: `force_text` renamed in Django 3.0
+
+**Proposed Solution**:
+Create custom EncryptedCharField using `cryptography` library directly (already installed)
+- More control over encryption
+- Direct Fernet encryption/decryption
+- Compatible with Django 5.0
+- Implementation: ~30 lines of code
+
+**Question for Architect**:
+Should I proceed with custom encryption field implementation, or would you prefer:
+- Option A: Custom EncryptedCharField (recommended)
+- Option B: Store encrypted in separate table
+- Option C: Temporary: Use regular CharField, encrypt in Phase 4
+
+**Current State**:
+- Guest model fully written (all fields, validations, properties)
+- 12 comprehensive tests written covering all business rules
+- Just need encryption field working
+- Can complete in 15-20 minutes with direction
+
+**Awaiting guidance to unblock Phase 3** 🚦
+
+---
+
 ### [DEVELOPER] 2025-10-22 23:45 - Starting Phase 3 (Guest & Staff)
 **Status**: ✅ Acknowledged architect's Phase 3 instructions
 **Current Task**: Implementing Guest & Staff models
