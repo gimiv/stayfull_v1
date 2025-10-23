@@ -71,9 +71,56 @@ class HotelAdmin(DynamicArrayMixin, admin.ModelAdmin):
     ordering = ["name"]
 
 
+class RoomTypeAdminForm(forms.ModelForm):
+    """Custom form for RoomType with size unit conversion"""
+
+    SQFT_TO_SQM = 0.092903  # 1 sq ft = 0.092903 sq m
+
+    size_unit = forms.ChoiceField(
+        choices=[('sqm', 'Square Meters'), ('sqft', 'Square Feet')],
+        initial='sqm',
+        required=False,
+        help_text="Select the unit for room size"
+    )
+
+    size_value = forms.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        required=False,
+        help_text="Enter room size in selected unit"
+    )
+
+    class Meta:
+        model = RoomType
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # If editing existing room type with size_sqm, show it in sq m
+        if self.instance and self.instance.size_sqm:
+            self.initial['size_value'] = self.instance.size_sqm
+            self.initial['size_unit'] = 'sqm'
+
+    def clean(self):
+        cleaned_data = super().clean()
+        size_value = cleaned_data.get('size_value')
+        size_unit = cleaned_data.get('size_unit')
+
+        # Convert to sq m if needed
+        if size_value:
+            if size_unit == 'sqft':
+                cleaned_data['size_sqm'] = size_value * self.SQFT_TO_SQM
+            else:
+                cleaned_data['size_sqm'] = size_value
+
+        return cleaned_data
+
+
 @admin.register(RoomType)
 class RoomTypeAdmin(DynamicArrayMixin, admin.ModelAdmin):
     """Admin interface for RoomType model"""
+
+    form = RoomTypeAdminForm
 
     list_display = [
         "name",
@@ -93,7 +140,7 @@ class RoomTypeAdmin(DynamicArrayMixin, admin.ModelAdmin):
     fieldsets = (
         ("Basic Information", {"fields": ("hotel", "name", "code", "description")}),
         ("Occupancy", {"fields": ("max_occupancy", "max_adults", "max_children")}),
-        ("Pricing & Details", {"fields": ("base_price", "size_sqm")}),
+        ("Pricing & Details", {"fields": ("base_price", "size_unit", "size_value")}),
         ("Configuration", {"fields": ("bed_configuration", "amenities", "images")}),
         ("Status & Ordering", {"fields": ("is_active", "display_order")}),
         ("Metadata", {"fields": ("id", "created_at", "updated_at"), "classes": ("collapse",)}),
