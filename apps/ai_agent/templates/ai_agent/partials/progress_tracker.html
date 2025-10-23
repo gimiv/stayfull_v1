@@ -1,0 +1,31 @@
+<!-- Progress Tracker - Phase 4.5 -->
+<div class="p-6">
+    <!-- Overall Progress Header -->
+    <div class="mb-6">
+        <div class="flex items-center justify-between mb-2">
+            <h3 class="text-sm font-semibold text-gray-900">Setup Progress</h3>
+            <span class="text-2xl font-bold text-blue-600">{{ progress.overall_progress }}%</span>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="w-full bg-gray-200 rounded-full h-3 mb-1">
+            <div
+                class="bg-blue-600 h-3 rounded-full transition-all duration-500 ease-out"
+                style="width: {{ progress.overall_progress }}%"
+            ></div>
+        </div>
+    </div>
+
+    <!-- Sections -->
+    <div class="space-y-4">
+        {% for section in progress.sections %}
+            {% if section.status == 'complete' %}
+                {% include "ai_agent/partials/section_complete.html" with section=section %}
+            {% elif section.status == 'active' %}
+                {% include "ai_agent/partials/section_active.html" with section=section %}
+            {% else %}
+                {% include "ai_agent/partials/section_pending.html" with section=section %}
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>

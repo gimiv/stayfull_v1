@@ -1,0 +1,219 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎉 Your Hotel is Live! - Stayfull</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes confetti {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(1000px) rotate(360deg); opacity: 0; }
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #f00;
+            animation: confetti 3s ease-in-out forwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fadeInUp {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes pulse-success {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .pulse-success {
+            animation: pulse-success 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-white to-green-50 min-h-screen flex items-center justify-center p-4">
+
+    <!-- Confetti Container -->
+    <div id="confetti-container" class="fixed inset-0 pointer-events-none overflow-hidden"></div>
+
+    <!-- Success Card -->
+    <div class="max-w-3xl w-full bg-white rounded-2xl shadow-2xl overflow-hidden animate-fadeInUp">
+
+        <!-- Header with Gradient -->
+        <div class="bg-gradient-to-r from-blue-600 to-green-500 px-8 py-12 text-center text-white">
+            <div class="inline-block p-4 bg-white/20 rounded-full mb-4 pulse-success">
+                <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">
+                🎉 Your hotel is live!
+            </h1>
+
+            <p class="text-xl md:text-2xl font-light opacity-90">
+                We did that in {{ stats.completion_time }}!
+            </p>
+        </div>
+
+        <!-- Content -->
+        <div class="px-8 py-10">
+
+            <!-- Hotel Info -->
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">{{ hotel.name }}</h2>
+
+                <!-- Live URL -->
+                <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 mb-6">
+                    <p class="text-sm text-gray-600 mb-2">Your Hotel Website</p>
+                    <a href="{{ hotel_url }}" target="_blank" class="text-xl font-mono text-blue-600 hover:text-blue-800 hover:underline flex items-center">
+                        {{ hotel.slug }}.stayfull.com
+                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                        </svg>
+                    </a>
+                    <p class="text-sm text-gray-500 mt-2">Share this link with guests to start accepting bookings!</p>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <!-- Room Types -->
+                    <div class="bg-gray-50 rounded-lg p-4 text-center">
+                        <div class="text-3xl font-bold text-blue-600 mb-1">{{ stats.room_types }}</div>
+                        <div class="text-sm text-gray-600">Room Types</div>
+                    </div>
+
+                    <!-- Total Rooms -->
+                    <div class="bg-gray-50 rounded-lg p-4 text-center">
+                        <div class="text-3xl font-bold text-green-600 mb-1">{{ stats.total_rooms }}</div>
+                        <div class="text-sm text-gray-600">Total Rooms</div>
+                    </div>
+
+                    <!-- Setup Time -->
+                    <div class="bg-gray-50 rounded-lg p-4 text-center">
+                        <div class="text-3xl font-bold text-purple-600 mb-1">{{ stats.completion_time }}</div>
+                        <div class="text-sm text-gray-600">Setup Time</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- What's Next -->
+            <div class="bg-gradient-to-r from-blue-50 to-green-50 rounded-lg p-6 mb-8">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    What's Next?
+                </h3>
+
+                <ul class="space-y-3">
+                    <li class="flex items-start">
+                        <svg class="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        <div>
+                            <span class="font-medium text-gray-900">Your hotel is operational</span>
+                            <span class="text-gray-600"> - Guests can book rooms immediately</span>
+                        </div>
+                    </li>
+
+                    <li class="flex items-start">
+                        <svg class="w-5 h-5 text-blue-500 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                        </svg>
+                        <div>
+                            <span class="font-medium text-gray-900">Ask Nora anytime</span>
+                            <span class="text-gray-600"> - Click her icon on any page for help</span>
+                        </div>
+                    </li>
+
+                    <li class="flex items-start">
+                        <svg class="w-5 h-5 text-purple-500 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                            <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
+                        </svg>
+                        <div>
+                            <span class="font-medium text-gray-900">Dashboard ready</span>
+                            <span class="text-gray-600"> - Manage bookings, pricing, and reports</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Nora's Message -->
+            <div class="bg-gray-50 rounded-lg p-6 mb-8 border-l-4 border-blue-500">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-900 mb-1">Nora says:</p>
+                        <p class="text-gray-700 italic">
+                            "Remember: I'm always here if you need anything! Just click my icon and ask.
+                            I can help with bookings, guest check-ins, reports, pricing changes, and pretty much anything else you need."
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4">
+                <a href="/admin/" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg text-center transition-colors duration-200 flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+                    </svg>
+                    Take me to Dashboard
+                </a>
+
+                <a href="{{ hotel_url }}" target="_blank" class="flex-1 bg-white hover:bg-gray-50 text-gray-700 font-semibold py-4 px-6 rounded-lg border-2 border-gray-300 text-center transition-colors duration-200 flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                    Preview Website
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for Confetti -->
+    <script>
+        // Generate confetti on page load
+        function createConfetti() {
+            const container = document.getElementById('confetti-container');
+            const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
+
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDelay = Math.random() * 3 + 's';
+                confetti.style.animationDuration = (Math.random() * 2 + 3) + 's';
+                container.appendChild(confetti);
+            }
+        }
+
+        // Run on page load
+        window.addEventListener('load', createConfetti);
+    </script>
+</body>
+</html>

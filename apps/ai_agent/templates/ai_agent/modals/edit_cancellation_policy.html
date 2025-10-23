@@ -1,0 +1,232 @@
+<!-- Cancellation Policy Edit Modal -->
+<div class="modal-overlay" id="cancellation-policy-modal">
+    <div class="modal-content bg-white rounded-lg shadow-2xl max-w-2xl w-full mx-4 p-6">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6 pb-4 border-b">
+            <h3 class="text-xl font-semibold text-gray-900">Edit Cancellation Policy</h3>
+            <button
+                onclick="closeModal()"
+                class="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Edit Form -->
+        <form id="cancellation-policy-form" class="space-y-6">
+            <!-- Policy Type -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Cancellation Type
+                </label>
+                <select
+                    id="cancellation-policy"
+                    name="cancellation_policy"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    onchange="updatePreview()"
+                >
+                    <option value="free_24h" {% if cancellation_policy == "free_24h" %}selected{% endif %}>
+                        Free cancellation up to 24 hours before arrival
+                    </option>
+                    <option value="free_48h" {% if cancellation_policy == "free_48h" %}selected{% endif %}>
+                        Free cancellation up to 48 hours before arrival
+                    </option>
+                    <option value="free_72h" {% if cancellation_policy == "free_72h" %}selected{% endif %}>
+                        Free cancellation up to 72 hours before arrival
+                    </option>
+                    <option value="free_7days" {% if cancellation_policy == "free_7days" %}selected{% endif %}>
+                        Free cancellation up to 7 days before arrival
+                    </option>
+                    <option value="free_14days" {% if cancellation_policy == "free_14days" %}selected{% endif %}>
+                        Free cancellation up to 14 days before arrival
+                    </option>
+                    <option value="non_refundable" {% if cancellation_policy == "non_refundable" %}selected{% endif %}>
+                        Non-refundable
+                    </option>
+                    <option value="custom_fee" {% if cancellation_policy == "custom_fee" %}selected{% endif %}>
+                        Custom cancellation fee
+                    </option>
+                </select>
+                <p class="mt-1 text-sm text-gray-500">How guests can cancel their reservation</p>
+            </div>
+
+            <!-- Cancellation Fee (shown only for custom_fee) -->
+            <div id="fee-section" style="display: {% if cancellation_policy == 'custom_fee' %}block{% else %}none{% endif %};">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Cancellation Fee
+                </label>
+                <div class="flex items-center space-x-3">
+                    <input
+                        type="number"
+                        id="cancellation-fee"
+                        name="cancellation_fee"
+                        value="{{ cancellation_fee }}"
+                        min="0"
+                        max="100"
+                        class="w-24 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        oninput="updatePreview()"
+                    />
+                    <span class="text-lg font-medium text-gray-900">%</span>
+                </div>
+                <p class="mt-1 text-sm text-gray-500">Percentage of booking amount charged as fee</p>
+            </div>
+
+            <!-- Live Preview -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div class="flex items-start space-x-2 mb-2">
+                    <svg class="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                    </svg>
+                    <div class="flex-1">
+                        <strong class="text-sm font-medium text-blue-900">Guest Will See:</strong>
+                        <p id="preview-text" class="mt-1 text-gray-800">
+                            ❌ Free cancellation up to 72 hours before arrival
+                        </p>
+                    </div>
+                </div>
+                <p class="text-xs text-blue-700 mt-2">
+                    This formatted text is automatically generated from your settings above
+                </p>
+            </div>
+        </form>
+
+        <!-- Actions -->
+        <div class="flex items-center justify-end space-x-3 mt-6 pt-4 border-t">
+            <button
+                type="button"
+                onclick="closeModal()"
+                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+            >
+                Cancel
+            </button>
+            <button
+                type="button"
+                onclick="saveCancellationPolicy()"
+                class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+            >
+                Save Changes
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function updatePreview() {
+    const policy = document.getElementById('cancellation-policy').value;
+    const fee = document.getElementById('cancellation-fee').value;
+
+    // Show/hide fee section
+    const feeSection = document.getElementById('fee-section');
+    if (policy === 'custom_fee') {
+        feeSection.style.display = 'block';
+    } else {
+        feeSection.style.display = 'none';
+    }
+
+    // Generate live preview via API
+    fetch('/nora/api/preview/policy/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            type: 'cancellation',
+            cancellation_policy: policy,
+            cancellation_fee: parseInt(fee) || 0
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('preview-text').textContent = data.formatted_text;
+        }
+    })
+    .catch(error => console.error('Preview error:', error));
+}
+
+function saveCancellationPolicy() {
+    const policy = document.getElementById('cancellation-policy').value;
+    const fee = document.getElementById('cancellation-fee').value;
+
+    fetch('/nora/api/save/cancellation-policy/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            cancellation_policy: policy,
+            cancellation_fee: parseInt(fee) || 0
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update the preview panel with new formatted text
+            const previewElement = document.querySelector('[data-policy="cancellation"]');
+            if (previewElement) {
+                previewElement.textContent = data.formatted_text;
+            }
+            closeModal();
+        } else {
+            alert('Failed to save changes');
+        }
+    })
+    .catch(error => {
+        console.error('Save error:', error);
+        alert('Error saving changes');
+    });
+}
+
+function closeModal() {
+    document.getElementById('cancellation-policy-modal').remove();
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Initialize preview on load
+document.addEventListener('DOMContentLoaded', updatePreview);
+</script>
+
+<style>
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-center;
+    z-index: 50;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content {
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+</style>

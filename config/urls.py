@@ -32,6 +32,8 @@ urlpatterns = [
     path("api/v1/", include("apps.guests.urls")),
     path("api/v1/", include("apps.staff.urls")),
     path("api/v1/", include("apps.reservations.urls")),
+    # Nora AI Agent
+    path("nora/", include("apps.ai_agent.urls")),
 ]
 
 # Django Debug Toolbar (development only)

@@ -1,0 +1,71 @@
+<!-- Completed Section - Collapsed by default, expandable -->
+<div class="border border-gray-200 rounded-lg bg-white">
+    <!-- Section Header (clickable to expand) -->
+    <div
+        class="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+        onclick="toggleSection('{{ section.id }}')"
+    >
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <!-- Checkmark Icon -->
+                <div class="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                </div>
+
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-900">{{ section.name }}</h4>
+                    <p class="text-xs text-gray-500">{{ section.completed_count }} items completed</p>
+                </div>
+            </div>
+
+            <!-- Progress Badge + Expand Icon -->
+            <div class="flex items-center space-x-2">
+                <span class="text-xs font-medium text-green-600">100%</span>
+                <svg
+                    id="chevron-{{ section.id }}"
+                    class="w-5 h-5 text-gray-400 transition-transform"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expanded Details (hidden by default) -->
+    <div
+        id="details-{{ section.id }}"
+        class="hidden border-t border-gray-200 p-4 bg-gray-50 space-y-2"
+    >
+        {% for step in section.steps %}
+            <div class="flex items-center justify-between text-sm">
+                <div class="flex items-center space-x-2">
+                    <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span class="text-gray-700">{{ step.label }}</span>
+                </div>
+                <span class="text-gray-900 font-medium">{{ step.value }}</span>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+function toggleSection(sectionId) {
+    const details = document.getElementById('details-' + sectionId);
+    const chevron = document.getElementById('chevron-' + sectionId);
+
+    if (details.classList.contains('hidden')) {
+        details.classList.remove('hidden');
+        chevron.style.transform = 'rotate(180deg)';
+    } else {
+        details.classList.add('hidden');
+        chevron.style.transform = 'rotate(0deg)';
+    }
+}
+</script>

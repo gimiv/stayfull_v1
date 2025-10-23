@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "apps.guests",
     "apps.staff",
     "apps.reservations",
+    "apps.ai_agent",  # Nora AI onboarding and operations agent
 ]
 
 MIDDLEWARE = [
