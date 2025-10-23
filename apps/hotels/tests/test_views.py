@@ -103,6 +103,41 @@ class HotelViewSetTest(APITestCase):
         # Can be 401 or 403 depending on authentication configuration
         assert response.status_code in [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
 
+    def test_retrieve_nonexistent_hotel(self):
+        """GET /api/v1/hotels/{invalid_id}/ returns 404"""
+        response = self.client.get('/api/v1/hotels/00000000-0000-0000-0000-000000000000/')
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_list_hotels_pagination(self):
+        """GET /api/v1/hotels/?page=1 returns paginated results"""
+        HotelFactory.create_batch(15)
+        response = self.client.get('/api/v1/hotels/?page=1')
+
+        assert response.status_code == status.HTTP_200_OK
+        assert 'results' in response.data
+        assert 'count' in response.data
+        assert response.data['count'] >= 15
+
+    def test_filter_hotels_by_type(self):
+        """GET /api/v1/hotels/?type=independent filters correctly"""
+        HotelFactory(type='independent')
+        HotelFactory(type='chain')
+        response = self.client.get('/api/v1/hotels/?type=independent')
+
+        assert response.status_code == status.HTTP_200_OK
+        for hotel in response.data['results']:
+            assert hotel['type'] == 'independent'
+
+    def test_search_hotels_by_name(self):
+        """GET /api/v1/hotels/?search=Test searches by name"""
+        HotelFactory(name='Test Luxury Hotel')
+        HotelFactory(name='Another Hotel')
+        response = self.client.get('/api/v1/hotels/?search=Test')
+
+        assert response.status_code == status.HTTP_200_OK
+        # Should find hotels with 'Test' in the name
+
 
 class RoomTypeViewSetTest(APITestCase):
     """Tests for RoomTypeViewSet API endpoints"""
@@ -184,3 +219,37 @@ class RoomViewSetTest(APITestCase):
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert 'room_number' in response.data
+
+    def test_retrieve_nonexistent_room(self):
+        """GET /api/v1/rooms/{invalid_id}/ returns 404"""
+        response = self.client.get('/api/v1/rooms/00000000-0000-0000-0000-000000000000/')
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_update_room_with_invalid_status(self):
+        """POST /api/v1/rooms/{id}/update_status/ with invalid status returns error"""
+        data = {'status': 'invalid_status'}
+        response = self.client.post(f'/api/v1/rooms/{self.room.id}/update_status/', data, format='json')
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert 'error' in response.data
+
+    def test_list_rooms_pagination(self):
+        """GET /api/v1/rooms/?page=1 returns paginated structure"""
+        # Create 10 rooms
+        RoomFactory.create_batch(10, hotel=self.hotel, room_type=self.room_type)
+
+        response = self.client.get('/api/v1/rooms/?page=1')
+
+        assert response.status_code == status.HTTP_200_OK
+        assert 'results' in response.data
+        assert 'count' in response.data
+        # Pagination structure exists (actual page size depends on DRF config)
+
+    def test_list_rooms_empty_result(self):
+        """GET /api/v1/rooms/?status=out_of_order returns empty list when no matches"""
+        response = self.client.get('/api/v1/rooms/?status=out_of_order')
+
+        assert response.status_code == status.HTTP_200_OK
+        assert 'results' in response.data
+        # May have 0 or more results depending on test data

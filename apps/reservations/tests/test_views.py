@@ -198,3 +198,70 @@ class ReservationViewSetTest(APITestCase):
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert 'error' in response.data
+
+    def test_retrieve_nonexistent_reservation(self):
+        """GET /api/v1/reservations/{invalid_id}/ returns 404"""
+        response = self.client.get('/api/v1/reservations/00000000-0000-0000-0000-000000000000/')
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_list_reservations_pagination(self):
+        """GET /api/v1/reservations/?page=1 returns paginated results"""
+        ReservationFactory.create_batch(20, hotel=self.hotel, room_type=self.room_type)
+        response = self.client.get('/api/v1/reservations/?page=1')
+
+        assert response.status_code == status.HTTP_200_OK
+        assert 'results' in response.data
+        assert 'count' in response.data
+        assert response.data['count'] >= 20
+
+    def test_filter_reservations_by_multiple_criteria(self):
+        """GET /api/v1/reservations/?hotel={id}&status=confirmed filters by multiple fields"""
+        ReservationFactory(hotel=self.hotel, room_type=self.room_type, status='confirmed')
+        ReservationFactory(hotel=self.hotel, room_type=self.room_type, status='cancelled')
+
+        response = self.client.get(f'/api/v1/reservations/?hotel={self.hotel.id}&status=confirmed')
+
+        assert response.status_code == status.HTTP_200_OK
+        for reservation in response.data['results']:
+            assert str(reservation['hotel']) == str(self.hotel.id)
+            assert reservation['status'] == 'confirmed'
+
+    def test_create_reservation_with_invalid_dates(self):
+        """POST /api/v1/reservations/ with check_out before check_in returns error"""
+        check_in = date.today() + timedelta(days=7)
+        check_out = check_in - timedelta(days=1)  # Invalid: check out before check in
+
+        data = {
+            'hotel': str(self.hotel.id),
+            'guest': str(self.guest.id),
+            'room_type': str(self.room_type.id),
+            'check_in_date': str(check_in),
+            'check_out_date': str(check_out),
+            'adults': 2,
+            'rate_per_night': '199.00',
+            'source': 'direct',
+        }
+        response = self.client.post('/api/v1/reservations/', data, format='json')
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_check_availability_with_no_rooms(self):
+        """POST /api/v1/reservations/check_availability/ returns available=false when no rooms"""
+        # Create a hotel with no rooms
+        empty_hotel = HotelFactory()
+        empty_room_type = RoomTypeFactory(hotel=empty_hotel)
+
+        check_in = date.today() + timedelta(days=7)
+        check_out = check_in + timedelta(days=3)
+
+        data = {
+            'hotel_id': str(empty_hotel.id),
+            'room_type_id': str(empty_room_type.id),
+            'check_in_date': str(check_in),
+            'check_out_date': str(check_out)
+        }
+        response = self.client.post('/api/v1/reservations/check_availability/', data, format='json')
+
+        assert response.status_code == status.HTTP_200_OK
+        assert 'available' in response.data

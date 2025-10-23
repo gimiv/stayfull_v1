@@ -83,3 +83,22 @@ class StaffViewSetTest(APITestCase):
 
         # Can be 401 or 403 depending on authentication configuration
         assert response.status_code in [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+
+    def test_retrieve_nonexistent_staff(self):
+        """GET /api/v1/staff/{invalid_id}/ returns 404"""
+        response = self.client.get('/api/v1/staff/00000000-0000-0000-0000-000000000000/')
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_list_staff_pagination(self):
+        """GET /api/v1/staff/?page=1 returns paginated results"""
+        # Create multiple staff members
+        for i in range(15):
+            user = User.objects.create_user(username=f'staff{i}', password='testpass123')
+            StaffFactory(hotel=self.hotel, user=user)
+
+        response = self.client.get('/api/v1/staff/?page=1')
+
+        assert response.status_code == status.HTTP_200_OK
+        assert 'results' in response.data
+        assert 'count' in response.data

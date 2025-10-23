@@ -8,8 +8,25 @@ from .base import *
 DEBUG = True
 
 # Additional apps for development
-INSTALLED_APPS += [
-    # Add development-specific apps here if needed
+INSTALLED_APPS = ['corsheaders'] + INSTALLED_APPS + ['debug_toolbar']
+
+# Middleware for CORS and Debug Toolbar
+MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
+] + MIDDLEWARE + [
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
+]
+
+# CORS settings (development only - allow frontend access)
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",  # Next.js dev server
+    "http://127.0.0.1:3000",
+]
+CORS_ALLOW_CREDENTIALS = True
+
+# Django Debug Toolbar settings
+INTERNAL_IPS = [
+    "127.0.0.1",
 ]
 
 # Database connection debugging (optional)

@@ -71,3 +71,35 @@ class GuestViewSetTest(APITestCase):
 
         # Can be 401 or 403 depending on authentication configuration
         assert response.status_code in [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+
+    def test_retrieve_nonexistent_guest(self):
+        """GET /api/v1/guests/{invalid_id}/ returns 404"""
+        response = self.client.get('/api/v1/guests/00000000-0000-0000-0000-000000000000/')
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_list_guests_pagination(self):
+        """GET /api/v1/guests/?page=1 returns paginated results"""
+        GuestFactory.create_batch(20)
+        response = self.client.get('/api/v1/guests/?page=1')
+
+        assert response.status_code == status.HTTP_200_OK
+        assert 'results' in response.data
+        assert 'count' in response.data
+        assert response.data['count'] >= 20
+
+    def test_create_guest_with_duplicate_email(self):
+        """POST /api/v1/guests/ with duplicate email returns validation error"""
+        existing_guest = GuestFactory(email='duplicate@example.com')
+        data = {
+            'first_name': 'Test',
+            'last_name': 'User',
+            'email': 'duplicate@example.com',  # Duplicate
+            'phone': '+1234567890',
+            'date_of_birth': '1990-01-01',
+            'nationality': 'US',
+        }
+        response = self.client.post('/api/v1/guests/', data, format='json')
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert 'email' in response.data
