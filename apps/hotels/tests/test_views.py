@@ -38,7 +38,19 @@ class HotelViewSetTest(APITestCase):
             'check_out_time': '11:00:00',
             'timezone': 'America/New_York',
             'currency': 'USD',
-            'languages': ['en']
+            'languages': ['en'],
+            'total_rooms': 100,
+            'address': {
+                'street': '123 Main St',
+                'city': 'New York',
+                'state': 'NY',
+                'country': 'US',
+                'postal_code': '10001'
+            },
+            'contact': {
+                'phone': '+1-555-0100',
+                'email': 'info@newtesthotel.com'
+            }
         }
         response = self.client.post('/api/v1/hotels/', data, format='json')
 
@@ -113,7 +125,7 @@ class RoomTypeViewSetTest(APITestCase):
         assert response.status_code == status.HTTP_200_OK
         # All returned room types should belong to the specified hotel
         for rt in response.data['results']:
-            assert rt['hotel'] == str(self.hotel.id)
+            assert str(rt['hotel']) == str(self.hotel.id)
 
     def test_available_rooms_action(self):
         """GET /api/v1/room-types/{id}/available_rooms/ returns availability count"""

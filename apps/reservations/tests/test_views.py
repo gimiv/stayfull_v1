@@ -134,7 +134,7 @@ class ReservationViewSetTest(APITestCase):
 
         assert response.status_code == status.HTTP_200_OK
         assert response.data['status'] == 'checked_in'
-        assert response.data['room'] == str(self.room.id)
+        assert str(response.data['room']) == str(self.room.id)
         assert 'checked_in_at' in response.data
 
     def test_check_out_reservation(self):

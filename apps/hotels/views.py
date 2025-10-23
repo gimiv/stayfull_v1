@@ -50,13 +50,14 @@ class HotelViewSet(viewsets.ModelViewSet):
         - Occupancy summary
         """
         hotel = self.get_object()
+        active_rooms_count = hotel.rooms.filter(is_active=True).count()
         return Response({
             'hotel_id': str(hotel.id),
             'hotel_name': hotel.name,
             'total_rooms': hotel.total_rooms,
-            'active_rooms': hotel.active_rooms,
+            'active_rooms': active_rooms_count,
             'total_room_types': hotel.room_types.count(),
-            'inactive_rooms': hotel.total_rooms - hotel.active_rooms,
+            'inactive_rooms': hotel.total_rooms - active_rooms_count,
         })
 
 
@@ -72,7 +73,7 @@ class RoomTypeViewSet(viewsets.ModelViewSet):
     queryset = RoomType.objects.all()
     serializer_class = RoomTypeSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['hotel', 'is_active', 'view_type']
+    filterset_fields = ['hotel', 'is_active']
     search_fields = ['name', 'code', 'description']
     ordering_fields = ['name', 'base_price', 'max_occupancy', 'created_at']
     ordering = ['hotel', 'name']
