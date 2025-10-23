@@ -3,9 +3,16 @@ Production settings for Stayfull PMS.
 """
 
 from .base import *
+import os
 
 # Ensure DEBUG is False in production
 DEBUG = False
+
+# CSRF trusted origins (required for Railway and other cloud platforms)
+CSRF_TRUSTED_ORIGINS = [
+    'https://web-production-2765.up.railway.app',
+    'https://*.railway.app',
+]
 
 # Security settings
 SECURE_SSL_REDIRECT = True

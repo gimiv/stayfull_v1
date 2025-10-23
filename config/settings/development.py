@@ -7,6 +7,14 @@ from .base import *
 # Override DEBUG to True in development
 DEBUG = True
 
+# CSRF trusted origins (for local and Railway deployments)
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+    'https://web-production-2765.up.railway.app',
+    'https://*.railway.app',
+]
+
 # Additional apps for development
 INSTALLED_APPS = ["corsheaders"] + INSTALLED_APPS + ["debug_toolbar"]
 
