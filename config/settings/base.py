@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'apps.core',
     'apps.hotels',
     'apps.guests',
+    'apps.staff',
 ]
 
 MIDDLEWARE = [
