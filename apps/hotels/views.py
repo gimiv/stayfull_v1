@@ -25,8 +25,8 @@ class HotelViewSet(viewsets.ModelViewSet):
     queryset = Hotel.objects.all()
     serializer_class = HotelSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['type', 'is_active', 'brand', 'chain']
-    search_fields = ['name', 'slug', 'address__city', 'address__country']
+    filterset_fields = ['type', 'is_active']
+    search_fields = ['name', 'slug', 'brand']
     ordering_fields = ['name', 'created_at', 'total_rooms']
     ordering = ['name']
 

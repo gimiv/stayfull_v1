@@ -28,23 +28,14 @@ class GuestViewSet(viewsets.ModelViewSet):
     serializer_class = GuestSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['account_status', 'nationality', 'language_preference']
+    filterset_fields = ['loyalty_tier', 'vip_status', 'nationality']
     search_fields = ['email', 'first_name', 'last_name', 'phone']
     ordering_fields = ['first_name', 'last_name', 'email', 'created_at', 'loyalty_points']
     ordering = ['-created_at']
 
     def get_queryset(self):
         """
-        Filter guests by active status by default.
-        Support additional filtering via query params.
+        Return all guests ordered by creation date.
+        Support filtering via query params.
         """
-        queryset = Guest.objects.all().order_by('-created_at')
-
-        # Optional: Filter to only active guests by default
-        # Can override with ?account_status=inactive
-        status = self.request.query_params.get('account_status')
-        if status is None and self.action == 'list':
-            # Default to active guests for list view
-            queryset = queryset.filter(account_status='active')
-
-        return queryset
+        return Guest.objects.all().order_by('-created_at')
