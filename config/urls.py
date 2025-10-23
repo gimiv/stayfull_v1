@@ -21,22 +21,21 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, Sp
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-
     # API Documentation
-    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
-    path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
-
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
+    path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
     # API v1 endpoints
-    path('api/v1/', include('apps.hotels.urls')),
-    path('api/v1/', include('apps.guests.urls')),
-    path('api/v1/', include('apps.staff.urls')),
-    path('api/v1/', include('apps.reservations.urls')),
+    path("api/v1/", include("apps.hotels.urls")),
+    path("api/v1/", include("apps.guests.urls")),
+    path("api/v1/", include("apps.staff.urls")),
+    path("api/v1/", include("apps.reservations.urls")),
 ]
 
 # Django Debug Toolbar (development only)
 if settings.DEBUG:
     import debug_toolbar
+
     urlpatterns += [
-        path('__debug__/', include(debug_toolbar.urls)),
+        path("__debug__/", include(debug_toolbar.urls)),
     ]

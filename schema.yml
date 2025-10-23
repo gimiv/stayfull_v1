@@ -1,0 +1,3148 @@
+openapi: 3.0.3
+info:
+  title: Stayfull API
+  version: 1.0.0
+  description: AI-powered Property Management System
+paths:
+  /api/v1/guests/:
+    get:
+      operationId: v1_guests_list
+      description: |-
+        ViewSet for managing guests.
+
+        Provides CRUD operations for guests with:
+        - Filtering by account status
+        - Search by email, name
+        - Ordering by name, created date
+
+        Important: Handles encrypted ID document fields transparently
+      parameters:
+      - in: query
+        name: loyalty_tier
+        schema:
+          type: string
+          nullable: true
+          enum:
+          - bronze
+          - gold
+          - platinum
+          - silver
+        description: |-
+          Loyalty program tier
+
+          * `bronze` - Bronze
+          * `silver` - Silver
+          * `gold` - Gold
+          * `platinum` - Platinum
+      - in: query
+        name: nationality
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: vip_status
+        schema:
+          type: boolean
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedGuestList'
+          description: ''
+    post:
+      operationId: v1_guests_create
+      description: |-
+        ViewSet for managing guests.
+
+        Provides CRUD operations for guests with:
+        - Filtering by account status
+        - Search by email, name
+        - Ordering by name, created date
+
+        Important: Handles encrypted ID document fields transparently
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Guest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Guest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Guest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Guest'
+          description: ''
+  /api/v1/guests/{id}/:
+    get:
+      operationId: v1_guests_retrieve
+      description: |-
+        ViewSet for managing guests.
+
+        Provides CRUD operations for guests with:
+        - Filtering by account status
+        - Search by email, name
+        - Ordering by name, created date
+
+        Important: Handles encrypted ID document fields transparently
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Guest'
+          description: ''
+    put:
+      operationId: v1_guests_update
+      description: |-
+        ViewSet for managing guests.
+
+        Provides CRUD operations for guests with:
+        - Filtering by account status
+        - Search by email, name
+        - Ordering by name, created date
+
+        Important: Handles encrypted ID document fields transparently
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Guest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Guest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Guest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Guest'
+          description: ''
+    patch:
+      operationId: v1_guests_partial_update
+      description: |-
+        ViewSet for managing guests.
+
+        Provides CRUD operations for guests with:
+        - Filtering by account status
+        - Search by email, name
+        - Ordering by name, created date
+
+        Important: Handles encrypted ID document fields transparently
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedGuest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedGuest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedGuest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Guest'
+          description: ''
+    delete:
+      operationId: v1_guests_destroy
+      description: |-
+        ViewSet for managing guests.
+
+        Provides CRUD operations for guests with:
+        - Filtering by account status
+        - Search by email, name
+        - Ordering by name, created date
+
+        Important: Handles encrypted ID document fields transparently
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/hotels/:
+    get:
+      operationId: v1_hotels_list
+      description: |-
+        ViewSet for managing hotels.
+
+        Provides CRUD operations for hotels with:
+        - Filtering by type, active status
+        - Search by name, slug
+        - Ordering by name, created date
+      parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: type
+        schema:
+          type: string
+          enum:
+          - boutique
+          - chain
+          - independent
+        description: |-
+          Hotel type
+
+          * `independent` - Independent
+          * `chain` - Chain
+          * `boutique` - Boutique
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedHotelList'
+          description: ''
+    post:
+      operationId: v1_hotels_create
+      description: |-
+        ViewSet for managing hotels.
+
+        Provides CRUD operations for hotels with:
+        - Filtering by type, active status
+        - Search by name, slug
+        - Ordering by name, created date
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Hotel'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Hotel'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Hotel'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Hotel'
+          description: ''
+  /api/v1/hotels/{id}/:
+    get:
+      operationId: v1_hotels_retrieve
+      description: |-
+        ViewSet for managing hotels.
+
+        Provides CRUD operations for hotels with:
+        - Filtering by type, active status
+        - Search by name, slug
+        - Ordering by name, created date
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Hotel'
+          description: ''
+    put:
+      operationId: v1_hotels_update
+      description: |-
+        ViewSet for managing hotels.
+
+        Provides CRUD operations for hotels with:
+        - Filtering by type, active status
+        - Search by name, slug
+        - Ordering by name, created date
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Hotel'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Hotel'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Hotel'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Hotel'
+          description: ''
+    patch:
+      operationId: v1_hotels_partial_update
+      description: |-
+        ViewSet for managing hotels.
+
+        Provides CRUD operations for hotels with:
+        - Filtering by type, active status
+        - Search by name, slug
+        - Ordering by name, created date
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedHotel'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedHotel'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedHotel'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Hotel'
+          description: ''
+    delete:
+      operationId: v1_hotels_destroy
+      description: |-
+        ViewSet for managing hotels.
+
+        Provides CRUD operations for hotels with:
+        - Filtering by type, active status
+        - Search by name, slug
+        - Ordering by name, created date
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/hotels/{id}/stats/:
+    get:
+      operationId: v1_hotels_stats_retrieve
+      description: |-
+        Get hotel statistics.
+
+        Returns:
+        - Total rooms
+        - Active rooms
+        - Total room types
+        - Occupancy summary
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Hotel'
+          description: ''
+  /api/v1/reservations/:
+    get:
+      operationId: v1_reservations_list
+      description: |-
+        ViewSet for managing reservations.
+
+        Provides CRUD operations for reservations with:
+        - Filtering by hotel, status, dates, guest
+        - Search by confirmation number, guest name
+        - Ordering by check-in date, created date
+        - Custom actions: check_availability, check_in, check_out, cancel
+      parameters:
+      - in: query
+        name: guest
+        schema:
+          type: string
+          format: uuid
+        description: Unique identifier (UUID)
+      - in: query
+        name: hotel
+        schema:
+          type: string
+          format: uuid
+        description: Unique identifier (UUID)
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: room_type
+        schema:
+          type: string
+          format: uuid
+        description: Unique identifier (UUID)
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: source
+        schema:
+          type: string
+          enum:
+          - chatbot
+          - corporate
+          - direct
+          - gds
+          - ota
+          - voice
+          - walkin
+        description: |-
+          * `direct` - Direct Booking
+          * `ota` - Online Travel Agency
+          * `gds` - Global Distribution System
+          * `walkin` - Walk-in
+          * `corporate` - Corporate
+          * `voice` - Voice Call
+          * `chatbot` - Chatbot
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - cancelled
+          - checked_in
+          - checked_out
+          - confirmed
+          - no_show
+          - pending
+        description: |-
+          * `pending` - Pending
+          * `confirmed` - Confirmed
+          * `checked_in` - Checked In
+          * `checked_out` - Checked Out
+          * `cancelled` - Cancelled
+          * `no_show` - No Show
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedReservationList'
+          description: ''
+    post:
+      operationId: v1_reservations_create
+      description: |-
+        ViewSet for managing reservations.
+
+        Provides CRUD operations for reservations with:
+        - Filtering by hotel, status, dates, guest
+        - Search by confirmation number, guest name
+        - Ordering by check-in date, created date
+        - Custom actions: check_availability, check_in, check_out, cancel
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+          description: ''
+  /api/v1/reservations/{id}/:
+    get:
+      operationId: v1_reservations_retrieve
+      description: |-
+        ViewSet for managing reservations.
+
+        Provides CRUD operations for reservations with:
+        - Filtering by hotel, status, dates, guest
+        - Search by confirmation number, guest name
+        - Ordering by check-in date, created date
+        - Custom actions: check_availability, check_in, check_out, cancel
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+          description: ''
+    put:
+      operationId: v1_reservations_update
+      description: |-
+        ViewSet for managing reservations.
+
+        Provides CRUD operations for reservations with:
+        - Filtering by hotel, status, dates, guest
+        - Search by confirmation number, guest name
+        - Ordering by check-in date, created date
+        - Custom actions: check_availability, check_in, check_out, cancel
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+          description: ''
+    patch:
+      operationId: v1_reservations_partial_update
+      description: |-
+        ViewSet for managing reservations.
+
+        Provides CRUD operations for reservations with:
+        - Filtering by hotel, status, dates, guest
+        - Search by confirmation number, guest name
+        - Ordering by check-in date, created date
+        - Custom actions: check_availability, check_in, check_out, cancel
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedReservation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedReservation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedReservation'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+          description: ''
+    delete:
+      operationId: v1_reservations_destroy
+      description: |-
+        ViewSet for managing reservations.
+
+        Provides CRUD operations for reservations with:
+        - Filtering by hotel, status, dates, guest
+        - Search by confirmation number, guest name
+        - Ordering by check-in date, created date
+        - Custom actions: check_availability, check_in, check_out, cancel
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/reservations/{id}/cancel/:
+    post:
+      operationId: v1_reservations_cancel_create
+      description: |-
+        Cancel a reservation.
+
+        POST /api/v1/reservations/{id}/cancel/
+
+        Body:
+        {
+            "reason": "Guest requested cancellation"
+        }
+
+        Returns: Updated reservation with status='cancelled'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+          description: ''
+  /api/v1/reservations/{id}/check_in/:
+    post:
+      operationId: v1_reservations_check_in_create
+      description: |-
+        Check in a reservation.
+
+        POST /api/v1/reservations/{id}/check_in/
+
+        Body (optional):
+        {
+            "room_id": "uuid"  # Assign specific room, or auto-assign
+        }
+
+        Returns: Updated reservation with status='checked_in'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+          description: ''
+  /api/v1/reservations/{id}/check_out/:
+    post:
+      operationId: v1_reservations_check_out_create
+      description: |-
+        Check out a reservation.
+
+        POST /api/v1/reservations/{id}/check_out/
+
+        Returns: Updated reservation with status='checked_out'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+          description: ''
+  /api/v1/reservations/check_availability/:
+    post:
+      operationId: v1_reservations_check_availability_create
+      description: |-
+        Check room availability for given dates.
+
+        POST /api/v1/reservations/check_availability/
+
+        Body:
+        {
+            "hotel_id": "uuid",
+            "room_type_id": "uuid",
+            "check_in_date": "2025-11-01",
+            "check_out_date": "2025-11-05"
+        }
+
+        Returns:
+        {
+            "available": true,
+            "count": 5,
+            "rooms": [...]
+        }
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+          description: ''
+  /api/v1/room-types/:
+    get:
+      operationId: v1_room_types_list
+      description: |-
+        ViewSet for managing room types.
+
+        Provides CRUD operations for room types with:
+        - Filtering by hotel, active status
+        - Search by name, code
+        - Ordering by name, base price
+      parameters:
+      - in: query
+        name: hotel
+        schema:
+          type: string
+          format: uuid
+        description: Unique identifier (UUID)
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRoomTypeList'
+          description: ''
+    post:
+      operationId: v1_room_types_create
+      description: |-
+        ViewSet for managing room types.
+
+        Provides CRUD operations for room types with:
+        - Filtering by hotel, active status
+        - Search by name, code
+        - Ordering by name, base price
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RoomType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RoomType'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomType'
+          description: ''
+  /api/v1/room-types/{id}/:
+    get:
+      operationId: v1_room_types_retrieve
+      description: |-
+        ViewSet for managing room types.
+
+        Provides CRUD operations for room types with:
+        - Filtering by hotel, active status
+        - Search by name, code
+        - Ordering by name, base price
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomType'
+          description: ''
+    put:
+      operationId: v1_room_types_update
+      description: |-
+        ViewSet for managing room types.
+
+        Provides CRUD operations for room types with:
+        - Filtering by hotel, active status
+        - Search by name, code
+        - Ordering by name, base price
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RoomType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RoomType'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomType'
+          description: ''
+    patch:
+      operationId: v1_room_types_partial_update
+      description: |-
+        ViewSet for managing room types.
+
+        Provides CRUD operations for room types with:
+        - Filtering by hotel, active status
+        - Search by name, code
+        - Ordering by name, base price
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedRoomType'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedRoomType'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedRoomType'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomType'
+          description: ''
+    delete:
+      operationId: v1_room_types_destroy
+      description: |-
+        ViewSet for managing room types.
+
+        Provides CRUD operations for room types with:
+        - Filtering by hotel, active status
+        - Search by name, code
+        - Ordering by name, base price
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/room-types/{id}/available_rooms/:
+    get:
+      operationId: v1_room_types_available_rooms_retrieve
+      description: |-
+        Get count of available rooms for this room type.
+
+        Returns rooms with status 'available' or 'clean'.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomType'
+          description: ''
+  /api/v1/rooms/:
+    get:
+      operationId: v1_rooms_list
+      description: |-
+        ViewSet for managing individual rooms.
+
+        Provides CRUD operations for rooms with:
+        - Filtering by hotel, room type, status, floor
+        - Search by room number
+        - Ordering by room number, floor
+      parameters:
+      - in: query
+        name: cleaning_status
+        schema:
+          type: string
+          enum:
+          - clean
+          - dirty
+          - in_progress
+          - inspected
+        description: |-
+          Housekeeping status
+
+          * `clean` - Clean
+          * `dirty` - Dirty
+          * `in_progress` - In Progress
+          * `inspected` - Inspected
+      - in: query
+        name: floor
+        schema:
+          type: integer
+      - in: query
+        name: hotel
+        schema:
+          type: string
+          format: uuid
+        description: Unique identifier (UUID)
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: room_type
+        schema:
+          type: string
+          format: uuid
+        description: Unique identifier (UUID)
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - available
+          - blocked
+          - maintenance
+          - occupied
+          - out_of_order
+        description: |-
+          Operational status
+
+          * `available` - Available
+          * `occupied` - Occupied
+          * `maintenance` - Maintenance
+          * `blocked` - Blocked
+          * `out_of_order` - Out of Order
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRoomList'
+          description: ''
+    post:
+      operationId: v1_rooms_create
+      description: |-
+        ViewSet for managing individual rooms.
+
+        Provides CRUD operations for rooms with:
+        - Filtering by hotel, room type, status, floor
+        - Search by room number
+        - Ordering by room number, floor
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Room'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Room'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Room'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+          description: ''
+  /api/v1/rooms/{id}/:
+    get:
+      operationId: v1_rooms_retrieve
+      description: |-
+        ViewSet for managing individual rooms.
+
+        Provides CRUD operations for rooms with:
+        - Filtering by hotel, room type, status, floor
+        - Search by room number
+        - Ordering by room number, floor
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+          description: ''
+    put:
+      operationId: v1_rooms_update
+      description: |-
+        ViewSet for managing individual rooms.
+
+        Provides CRUD operations for rooms with:
+        - Filtering by hotel, room type, status, floor
+        - Search by room number
+        - Ordering by room number, floor
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Room'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Room'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Room'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+          description: ''
+    patch:
+      operationId: v1_rooms_partial_update
+      description: |-
+        ViewSet for managing individual rooms.
+
+        Provides CRUD operations for rooms with:
+        - Filtering by hotel, room type, status, floor
+        - Search by room number
+        - Ordering by room number, floor
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedRoom'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedRoom'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedRoom'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+          description: ''
+    delete:
+      operationId: v1_rooms_destroy
+      description: |-
+        ViewSet for managing individual rooms.
+
+        Provides CRUD operations for rooms with:
+        - Filtering by hotel, room type, status, floor
+        - Search by room number
+        - Ordering by room number, floor
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/rooms/{id}/update_cleaning_status/:
+    post:
+      operationId: v1_rooms_update_cleaning_status_create
+      description: |-
+        Update room cleaning status.
+
+        Accepts: {"cleaning_status": "clean|dirty|cleaning|inspecting"}
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Room'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Room'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Room'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+          description: ''
+  /api/v1/rooms/{id}/update_status/:
+    post:
+      operationId: v1_rooms_update_status_create
+      description: |-
+        Update room status.
+
+        Accepts: {"status": "available|occupied|maintenance|out_of_order"}
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Room'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Room'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Room'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+          description: ''
+  /api/v1/staff/:
+    get:
+      operationId: v1_staff_list
+      description: |-
+        ViewSet for managing staff members.
+
+        Provides CRUD operations for staff with:
+        - Filtering by hotel, role, active status
+        - Search by user name, email, employee ID
+        - Ordering by role, hired date
+        - Multi-tenancy: Filter staff by hotel access
+      parameters:
+      - in: query
+        name: hotel
+        schema:
+          type: string
+          format: uuid
+        description: Unique identifier (UUID)
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: role
+        schema:
+          type: string
+          enum:
+          - housekeeping
+          - maintenance
+          - manager
+          - receptionist
+        description: |-
+          * `manager` - Manager
+          * `receptionist` - Receptionist
+          * `housekeeping` - Housekeeping
+          * `maintenance` - Maintenance
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedStaffList'
+          description: ''
+    post:
+      operationId: v1_staff_create
+      description: |-
+        ViewSet for managing staff members.
+
+        Provides CRUD operations for staff with:
+        - Filtering by hotel, role, active status
+        - Search by user name, email, employee ID
+        - Ordering by role, hired date
+        - Multi-tenancy: Filter staff by hotel access
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Staff'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Staff'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Staff'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Staff'
+          description: ''
+  /api/v1/staff/{id}/:
+    get:
+      operationId: v1_staff_retrieve
+      description: |-
+        ViewSet for managing staff members.
+
+        Provides CRUD operations for staff with:
+        - Filtering by hotel, role, active status
+        - Search by user name, email, employee ID
+        - Ordering by role, hired date
+        - Multi-tenancy: Filter staff by hotel access
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Staff'
+          description: ''
+    put:
+      operationId: v1_staff_update
+      description: |-
+        ViewSet for managing staff members.
+
+        Provides CRUD operations for staff with:
+        - Filtering by hotel, role, active status
+        - Search by user name, email, employee ID
+        - Ordering by role, hired date
+        - Multi-tenancy: Filter staff by hotel access
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Staff'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Staff'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Staff'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Staff'
+          description: ''
+    patch:
+      operationId: v1_staff_partial_update
+      description: |-
+        ViewSet for managing staff members.
+
+        Provides CRUD operations for staff with:
+        - Filtering by hotel, role, active status
+        - Search by user name, email, employee ID
+        - Ordering by role, hired date
+        - Multi-tenancy: Filter staff by hotel access
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedStaff'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedStaff'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedStaff'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Staff'
+          description: ''
+    delete:
+      operationId: v1_staff_destroy
+      description: |-
+        ViewSet for managing staff members.
+
+        Provides CRUD operations for staff with:
+        - Filtering by hotel, role, active status
+        - Search by user name, email, employee ID
+        - Ordering by role, hired date
+        - Multi-tenancy: Filter staff by hotel access
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        required: true
+      tags:
+      - v1
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+components:
+  schemas:
+    BlankEnum:
+      enum:
+      - ''
+    CleaningStatusEnum:
+      enum:
+      - clean
+      - dirty
+      - in_progress
+      - inspected
+      type: string
+      description: |-
+        * `clean` - Clean
+        * `dirty` - Dirty
+        * `in_progress` - In Progress
+        * `inspected` - Inspected
+    Guest:
+      type: object
+      description: Serializer for Guest model
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Unique identifier (UUID)
+        user:
+          type: integer
+          nullable: true
+          description: Linked user account (if registered)
+        first_name:
+          type: string
+          description: First name (1-100 characters)
+          maxLength: 100
+        last_name:
+          type: string
+          description: Last name (1-100 characters)
+          maxLength: 100
+        full_name:
+          type: string
+          readOnly: true
+        email:
+          type: string
+          format: email
+          description: Email address (must be unique)
+          maxLength: 255
+        phone:
+          type: string
+          description: Phone number with country code (e.g., +1-555-0123)
+          maxLength: 20
+        date_of_birth:
+          type: string
+          format: date
+          nullable: true
+          description: Date of birth (must be 18+ for primary guest)
+        nationality:
+          type: string
+          nullable: true
+          description: ISO 3166-1 alpha-2 country code
+          maxLength: 2
+        id_document_type:
+          nullable: true
+          description: |-
+            Type of ID document
+
+            * `passport` - Passport
+            * `drivers_license` - Driver's License
+            * `national_id` - National ID
+            * `other` - Other
+          oneOf:
+          - $ref: '#/components/schemas/IdDocumentTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        id_document_number:
+          type: string
+          nullable: true
+          description: ID document number (encrypted at rest)
+          maxLength: 255
+        address:
+          nullable: true
+          description: Home address (street, city, state, postal_code, country)
+        preferences:
+          nullable: true
+          description: Guest preferences (room floor, bed type, dietary, etc.)
+        loyalty_tier:
+          nullable: true
+          description: |-
+            Loyalty program tier
+
+            * `bronze` - Bronze
+            * `silver` - Silver
+            * `gold` - Gold
+            * `platinum` - Platinum
+          oneOf:
+          - $ref: '#/components/schemas/LoyaltyTierEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        loyalty_points:
+          type: integer
+          readOnly: true
+          description: Loyalty points balance (cannot be negative)
+        vip_status:
+          type: boolean
+          description: VIP guest flag
+        notes:
+          type: string
+          nullable: true
+          description: Staff notes about guest (max 2000 characters)
+          maxLength: 2000
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Timestamp when the record was created
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Timestamp when the record was last updated
+      required:
+      - created_at
+      - email
+      - first_name
+      - full_name
+      - id
+      - last_name
+      - loyalty_points
+      - phone
+      - updated_at
+    Hotel:
+      type: object
+      description: Serializer for Hotel model
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Unique identifier (UUID)
+        name:
+          type: string
+          description: Hotel name (3-200 characters)
+          maxLength: 200
+        slug:
+          type: string
+          readOnly: true
+          description: URL-safe identifier (globally unique)
+          pattern: ^[-a-zA-Z0-9_]+$
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TypeEnum'
+          description: |-
+            Hotel type
+
+            * `independent` - Independent
+            * `chain` - Chain
+            * `boutique` - Boutique
+        brand:
+          type: string
+          nullable: true
+          description: Brand name (if part of a chain)
+          maxLength: 100
+        address:
+          description: Physical address (street, city, state, postal_code, country)
+        contact:
+          description: Contact information (phone, email, website)
+        timezone:
+          type: string
+          description: IANA timezone (e.g., 'America/New_York')
+          maxLength: 50
+        currency:
+          type: string
+          description: ISO 4217 currency code (e.g., 'USD')
+          maxLength: 3
+        languages:
+          description: Supported languages as ISO 639-1 codes (e.g., ['en', 'es'])
+        check_in_time:
+          type: string
+          format: time
+          description: Default check-in time (e.g., '15:00')
+        check_out_time:
+          type: string
+          format: time
+          description: Default check-out time (e.g., '11:00')
+        total_rooms:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+          description: Total number of rooms in the hotel
+        settings:
+          nullable: true
+          description: Additional hotel settings (booking rules, policies, etc.)
+        is_active:
+          type: boolean
+          description: Hotel active status
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Timestamp when the record was created
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Timestamp when the record was last updated
+      required:
+      - address
+      - check_in_time
+      - check_out_time
+      - contact
+      - created_at
+      - currency
+      - id
+      - languages
+      - name
+      - slug
+      - timezone
+      - total_rooms
+      - type
+      - updated_at
+    IdDocumentTypeEnum:
+      enum:
+      - passport
+      - drivers_license
+      - national_id
+      - other
+      type: string
+      description: |-
+        * `passport` - Passport
+        * `drivers_license` - Driver's License
+        * `national_id` - National ID
+        * `other` - Other
+    LoyaltyTierEnum:
+      enum:
+      - bronze
+      - silver
+      - gold
+      - platinum
+      type: string
+      description: |-
+        * `bronze` - Bronze
+        * `silver` - Silver
+        * `gold` - Gold
+        * `platinum` - Platinum
+    NullEnum:
+      enum:
+      - null
+    PaginatedGuestList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Guest'
+    PaginatedHotelList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Hotel'
+    PaginatedReservationList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reservation'
+    PaginatedRoomList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Room'
+    PaginatedRoomTypeList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoomType'
+    PaginatedStaffList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Staff'
+    PatchedGuest:
+      type: object
+      description: Serializer for Guest model
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Unique identifier (UUID)
+        user:
+          type: integer
+          nullable: true
+          description: Linked user account (if registered)
+        first_name:
+          type: string
+          description: First name (1-100 characters)
+          maxLength: 100
+        last_name:
+          type: string
+          description: Last name (1-100 characters)
+          maxLength: 100
+        full_name:
+          type: string
+          readOnly: true
+        email:
+          type: string
+          format: email
+          description: Email address (must be unique)
+          maxLength: 255
+        phone:
+          type: string
+          description: Phone number with country code (e.g., +1-555-0123)
+          maxLength: 20
+        date_of_birth:
+          type: string
+          format: date
+          nullable: true
+          description: Date of birth (must be 18+ for primary guest)
+        nationality:
+          type: string
+          nullable: true
+          description: ISO 3166-1 alpha-2 country code
+          maxLength: 2
+        id_document_type:
+          nullable: true
+          description: |-
+            Type of ID document
+
+            * `passport` - Passport
+            * `drivers_license` - Driver's License
+            * `national_id` - National ID
+            * `other` - Other
+          oneOf:
+          - $ref: '#/components/schemas/IdDocumentTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        id_document_number:
+          type: string
+          nullable: true
+          description: ID document number (encrypted at rest)
+          maxLength: 255
+        address:
+          nullable: true
+          description: Home address (street, city, state, postal_code, country)
+        preferences:
+          nullable: true
+          description: Guest preferences (room floor, bed type, dietary, etc.)
+        loyalty_tier:
+          nullable: true
+          description: |-
+            Loyalty program tier
+
+            * `bronze` - Bronze
+            * `silver` - Silver
+            * `gold` - Gold
+            * `platinum` - Platinum
+          oneOf:
+          - $ref: '#/components/schemas/LoyaltyTierEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        loyalty_points:
+          type: integer
+          readOnly: true
+          description: Loyalty points balance (cannot be negative)
+        vip_status:
+          type: boolean
+          description: VIP guest flag
+        notes:
+          type: string
+          nullable: true
+          description: Staff notes about guest (max 2000 characters)
+          maxLength: 2000
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Timestamp when the record was created
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Timestamp when the record was last updated
+    PatchedHotel:
+      type: object
+      description: Serializer for Hotel model
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Unique identifier (UUID)
+        name:
+          type: string
+          description: Hotel name (3-200 characters)
+          maxLength: 200
+        slug:
+          type: string
+          readOnly: true
+          description: URL-safe identifier (globally unique)
+          pattern: ^[-a-zA-Z0-9_]+$
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TypeEnum'
+          description: |-
+            Hotel type
+
+            * `independent` - Independent
+            * `chain` - Chain
+            * `boutique` - Boutique
+        brand:
+          type: string
+          nullable: true
+          description: Brand name (if part of a chain)
+          maxLength: 100
+        address:
+          description: Physical address (street, city, state, postal_code, country)
+        contact:
+          description: Contact information (phone, email, website)
+        timezone:
+          type: string
+          description: IANA timezone (e.g., 'America/New_York')
+          maxLength: 50
+        currency:
+          type: string
+          description: ISO 4217 currency code (e.g., 'USD')
+          maxLength: 3
+        languages:
+          description: Supported languages as ISO 639-1 codes (e.g., ['en', 'es'])
+        check_in_time:
+          type: string
+          format: time
+          description: Default check-in time (e.g., '15:00')
+        check_out_time:
+          type: string
+          format: time
+          description: Default check-out time (e.g., '11:00')
+        total_rooms:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+          description: Total number of rooms in the hotel
+        settings:
+          nullable: true
+          description: Additional hotel settings (booking rules, policies, etc.)
+        is_active:
+          type: boolean
+          description: Hotel active status
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Timestamp when the record was created
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Timestamp when the record was last updated
+    PatchedReservation:
+      type: object
+      description: Serializer for Reservation model
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Unique identifier (UUID)
+        confirmation_number:
+          type: string
+          readOnly: true
+          description: Auto-generated unique confirmation code
+        hotel:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        hotel_name:
+          type: string
+          readOnly: true
+        guest:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        guest_name:
+          type: string
+          readOnly: true
+        guest_email:
+          type: string
+          format: email
+          readOnly: true
+        room:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+          nullable: true
+        room_number:
+          type: string
+          readOnly: true
+          nullable: true
+        room_type:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        room_type_name:
+          type: string
+          readOnly: true
+        check_in_date:
+          type: string
+          format: date
+        check_out_date:
+          type: string
+          format: date
+        nights:
+          type: integer
+          readOnly: true
+          description: Auto-calculated from check-in/check-out dates
+        adults:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+          description: Number of adult guests
+        children:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          description: Number of children
+        status:
+          $ref: '#/components/schemas/ReservationStatusEnum'
+        source:
+          $ref: '#/components/schemas/SourceEnum'
+        channel:
+          type: string
+          description: Specific channel/partner (e.g., Booking.com, Expedia)
+          maxLength: 100
+        rate_per_night:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: Nightly rate for this reservation
+        total_room_charges:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+          description: 'Auto-calculated: rate_per_night × nights'
+        taxes:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        fees:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        extras:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: Additional charges (room service, minibar, etc.)
+        discounts:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+          description: 'Auto-calculated: room_charges + taxes + fees + extras - discounts'
+        deposit_paid:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        special_requests:
+          type: string
+          description: Guest special requests (early check-in, late checkout, etc.)
+          maxLength: 1000
+        notes:
+          type: string
+          description: Internal notes about this reservation
+          maxLength: 2000
+        booked_at:
+          type: string
+          format: date-time
+          readOnly: true
+        checked_in_at:
+          type: string
+          format: date-time
+          nullable: true
+        checked_out_at:
+          type: string
+          format: date-time
+          nullable: true
+        cancelled_at:
+          type: string
+          format: date-time
+          nullable: true
+        cancellation_reason:
+          type: string
+          maxLength: 500
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Timestamp when the record was created
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Timestamp when the record was last updated
+    PatchedRoom:
+      type: object
+      description: Serializer for Room model
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Unique identifier (UUID)
+        hotel:
+          type: string
+          format: uuid
+          description: Parent hotel
+        hotel_name:
+          type: string
+          readOnly: true
+        room_type:
+          type: string
+          format: uuid
+          description: Room type/category
+        room_type_name:
+          type: string
+          readOnly: true
+        room_number:
+          type: string
+          description: Room identifier (e.g., '101', 'A-205')
+          maxLength: 20
+        floor:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+          description: Floor number (can be negative for basement)
+        status:
+          allOf:
+          - $ref: '#/components/schemas/RoomStatusEnum'
+          description: |-
+            Operational status
+
+            * `available` - Available
+            * `occupied` - Occupied
+            * `maintenance` - Maintenance
+            * `blocked` - Blocked
+            * `out_of_order` - Out of Order
+        cleaning_status:
+          allOf:
+          - $ref: '#/components/schemas/CleaningStatusEnum'
+          description: |-
+            Housekeeping status
+
+            * `clean` - Clean
+            * `dirty` - Dirty
+            * `in_progress` - In Progress
+            * `inspected` - Inspected
+        features:
+          nullable: true
+          description: Room-specific features
+        notes:
+          type: string
+          nullable: true
+          description: Internal notes
+          maxLength: 1000
+        is_active:
+          type: boolean
+          description: Available for assignment
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Timestamp when the record was created
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Timestamp when the record was last updated
+    PatchedRoomType:
+      type: object
+      description: Serializer for RoomType model
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Unique identifier (UUID)
+        hotel:
+          type: string
+          format: uuid
+          description: Parent hotel
+        hotel_name:
+          type: string
+          readOnly: true
+        code:
+          type: string
+          description: Short code (e.g., 'DLX', 'STD')
+          maxLength: 20
+        name:
+          type: string
+          description: Room type name (e.g., 'Deluxe Suite')
+          maxLength: 100
+        description:
+          type: string
+          nullable: true
+          description: Detailed description
+          maxLength: 2000
+        max_occupancy:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+          description: Maximum total guests
+        max_adults:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+          description: Maximum adults
+        max_children:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          description: Maximum children
+        bed_configuration:
+          description: 'Bed types and counts (e.g., [{''type'': ''king'', ''count'':
+            1}])'
+        size_sqm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+          nullable: true
+          description: Room size in square meters
+        base_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: Base nightly rate
+        amenities:
+          description: Room amenities (e.g., ['wifi', 'tv', 'mini_fridge'])
+        images:
+          nullable: true
+          description: Room photos with URLs
+        is_active:
+          type: boolean
+          description: Available for booking
+        display_order:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          description: Sort order in listings
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Timestamp when the record was created
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Timestamp when the record was last updated
+    PatchedStaff:
+      type: object
+      description: Serializer for Staff model
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Unique identifier (UUID)
+        user:
+          type: integer
+        user_email:
+          type: string
+          format: email
+          readOnly: true
+        user_name:
+          type: string
+          readOnly: true
+        hotel:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        hotel_name:
+          type: string
+          readOnly: true
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+        department:
+          type: string
+          maxLength: 100
+        shift:
+          type: string
+          maxLength: 50
+        permissions: {}
+        is_active:
+          type: boolean
+        is_manager:
+          type: boolean
+          readOnly: true
+        hired_at:
+          type: string
+          format: date
+        terminated_at:
+          type: string
+          format: date
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Timestamp when the record was created
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Timestamp when the record was last updated
+    Reservation:
+      type: object
+      description: Serializer for Reservation model
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Unique identifier (UUID)
+        confirmation_number:
+          type: string
+          readOnly: true
+          description: Auto-generated unique confirmation code
+        hotel:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        hotel_name:
+          type: string
+          readOnly: true
+        guest:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        guest_name:
+          type: string
+          readOnly: true
+        guest_email:
+          type: string
+          format: email
+          readOnly: true
+        room:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+          nullable: true
+        room_number:
+          type: string
+          readOnly: true
+          nullable: true
+        room_type:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        room_type_name:
+          type: string
+          readOnly: true
+        check_in_date:
+          type: string
+          format: date
+        check_out_date:
+          type: string
+          format: date
+        nights:
+          type: integer
+          readOnly: true
+          description: Auto-calculated from check-in/check-out dates
+        adults:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+          description: Number of adult guests
+        children:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          description: Number of children
+        status:
+          $ref: '#/components/schemas/ReservationStatusEnum'
+        source:
+          $ref: '#/components/schemas/SourceEnum'
+        channel:
+          type: string
+          description: Specific channel/partner (e.g., Booking.com, Expedia)
+          maxLength: 100
+        rate_per_night:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: Nightly rate for this reservation
+        total_room_charges:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+          description: 'Auto-calculated: rate_per_night × nights'
+        taxes:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        fees:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        extras:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: Additional charges (room service, minibar, etc.)
+        discounts:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+          description: 'Auto-calculated: room_charges + taxes + fees + extras - discounts'
+        deposit_paid:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        special_requests:
+          type: string
+          description: Guest special requests (early check-in, late checkout, etc.)
+          maxLength: 1000
+        notes:
+          type: string
+          description: Internal notes about this reservation
+          maxLength: 2000
+        booked_at:
+          type: string
+          format: date-time
+          readOnly: true
+        checked_in_at:
+          type: string
+          format: date-time
+          nullable: true
+        checked_out_at:
+          type: string
+          format: date-time
+          nullable: true
+        cancelled_at:
+          type: string
+          format: date-time
+          nullable: true
+        cancellation_reason:
+          type: string
+          maxLength: 500
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Timestamp when the record was created
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Timestamp when the record was last updated
+      required:
+      - adults
+      - booked_at
+      - check_in_date
+      - check_out_date
+      - confirmation_number
+      - created_at
+      - guest
+      - guest_email
+      - guest_name
+      - hotel
+      - hotel_name
+      - id
+      - nights
+      - rate_per_night
+      - room_number
+      - room_type
+      - room_type_name
+      - total_amount
+      - total_room_charges
+      - updated_at
+    ReservationStatusEnum:
+      enum:
+      - pending
+      - confirmed
+      - checked_in
+      - checked_out
+      - cancelled
+      - no_show
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `confirmed` - Confirmed
+        * `checked_in` - Checked In
+        * `checked_out` - Checked Out
+        * `cancelled` - Cancelled
+        * `no_show` - No Show
+    RoleEnum:
+      enum:
+      - manager
+      - receptionist
+      - housekeeping
+      - maintenance
+      type: string
+      description: |-
+        * `manager` - Manager
+        * `receptionist` - Receptionist
+        * `housekeeping` - Housekeeping
+        * `maintenance` - Maintenance
+    Room:
+      type: object
+      description: Serializer for Room model
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Unique identifier (UUID)
+        hotel:
+          type: string
+          format: uuid
+          description: Parent hotel
+        hotel_name:
+          type: string
+          readOnly: true
+        room_type:
+          type: string
+          format: uuid
+          description: Room type/category
+        room_type_name:
+          type: string
+          readOnly: true
+        room_number:
+          type: string
+          description: Room identifier (e.g., '101', 'A-205')
+          maxLength: 20
+        floor:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+          description: Floor number (can be negative for basement)
+        status:
+          allOf:
+          - $ref: '#/components/schemas/RoomStatusEnum'
+          description: |-
+            Operational status
+
+            * `available` - Available
+            * `occupied` - Occupied
+            * `maintenance` - Maintenance
+            * `blocked` - Blocked
+            * `out_of_order` - Out of Order
+        cleaning_status:
+          allOf:
+          - $ref: '#/components/schemas/CleaningStatusEnum'
+          description: |-
+            Housekeeping status
+
+            * `clean` - Clean
+            * `dirty` - Dirty
+            * `in_progress` - In Progress
+            * `inspected` - Inspected
+        features:
+          nullable: true
+          description: Room-specific features
+        notes:
+          type: string
+          nullable: true
+          description: Internal notes
+          maxLength: 1000
+        is_active:
+          type: boolean
+          description: Available for assignment
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Timestamp when the record was created
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Timestamp when the record was last updated
+      required:
+      - created_at
+      - hotel
+      - hotel_name
+      - id
+      - room_number
+      - room_type
+      - room_type_name
+      - updated_at
+    RoomStatusEnum:
+      enum:
+      - available
+      - occupied
+      - maintenance
+      - blocked
+      - out_of_order
+      type: string
+      description: |-
+        * `available` - Available
+        * `occupied` - Occupied
+        * `maintenance` - Maintenance
+        * `blocked` - Blocked
+        * `out_of_order` - Out of Order
+    RoomType:
+      type: object
+      description: Serializer for RoomType model
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Unique identifier (UUID)
+        hotel:
+          type: string
+          format: uuid
+          description: Parent hotel
+        hotel_name:
+          type: string
+          readOnly: true
+        code:
+          type: string
+          description: Short code (e.g., 'DLX', 'STD')
+          maxLength: 20
+        name:
+          type: string
+          description: Room type name (e.g., 'Deluxe Suite')
+          maxLength: 100
+        description:
+          type: string
+          nullable: true
+          description: Detailed description
+          maxLength: 2000
+        max_occupancy:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+          description: Maximum total guests
+        max_adults:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+          description: Maximum adults
+        max_children:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          description: Maximum children
+        bed_configuration:
+          description: 'Bed types and counts (e.g., [{''type'': ''king'', ''count'':
+            1}])'
+        size_sqm:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+          nullable: true
+          description: Room size in square meters
+        base_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: Base nightly rate
+        amenities:
+          description: Room amenities (e.g., ['wifi', 'tv', 'mini_fridge'])
+        images:
+          nullable: true
+          description: Room photos with URLs
+        is_active:
+          type: boolean
+          description: Available for booking
+        display_order:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          description: Sort order in listings
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Timestamp when the record was created
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Timestamp when the record was last updated
+      required:
+      - amenities
+      - base_price
+      - bed_configuration
+      - code
+      - created_at
+      - hotel
+      - hotel_name
+      - id
+      - max_adults
+      - max_children
+      - max_occupancy
+      - name
+      - updated_at
+    SourceEnum:
+      enum:
+      - direct
+      - ota
+      - gds
+      - walkin
+      - corporate
+      - voice
+      - chatbot
+      type: string
+      description: |-
+        * `direct` - Direct Booking
+        * `ota` - Online Travel Agency
+        * `gds` - Global Distribution System
+        * `walkin` - Walk-in
+        * `corporate` - Corporate
+        * `voice` - Voice Call
+        * `chatbot` - Chatbot
+    Staff:
+      type: object
+      description: Serializer for Staff model
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Unique identifier (UUID)
+        user:
+          type: integer
+        user_email:
+          type: string
+          format: email
+          readOnly: true
+        user_name:
+          type: string
+          readOnly: true
+        hotel:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID)
+        hotel_name:
+          type: string
+          readOnly: true
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+        department:
+          type: string
+          maxLength: 100
+        shift:
+          type: string
+          maxLength: 50
+        permissions: {}
+        is_active:
+          type: boolean
+        is_manager:
+          type: boolean
+          readOnly: true
+        hired_at:
+          type: string
+          format: date
+        terminated_at:
+          type: string
+          format: date
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Timestamp when the record was created
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Timestamp when the record was last updated
+      required:
+      - created_at
+      - department
+      - hired_at
+      - hotel
+      - hotel_name
+      - id
+      - is_manager
+      - role
+      - shift
+      - updated_at
+      - user
+      - user_email
+      - user_name
+    TypeEnum:
+      enum:
+      - independent
+      - chain
+      - boutique
+      type: string
+      description: |-
+        * `independent` - Independent
+        * `chain` - Chain
+        * `boutique` - Boutique
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid

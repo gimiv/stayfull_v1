@@ -22,23 +22,15 @@ class Staff(BaseModel):
     """
 
     ROLE_CHOICES = [
-        ('manager', 'Manager'),
-        ('receptionist', 'Receptionist'),
-        ('housekeeping', 'Housekeeping'),
-        ('maintenance', 'Maintenance'),
+        ("manager", "Manager"),
+        ("receptionist", "Receptionist"),
+        ("housekeeping", "Housekeeping"),
+        ("maintenance", "Maintenance"),
     ]
 
     # Foreign Keys
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='staff_positions'
-    )
-    hotel = models.ForeignKey(
-        Hotel,
-        on_delete=models.CASCADE,
-        related_name='staff'
-    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="staff_positions")
+    hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE, related_name="staff")
 
     # Role & Department
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
@@ -56,10 +48,10 @@ class Staff(BaseModel):
     terminated_at = models.DateField(null=True, blank=True)
 
     class Meta:
-        verbose_name = 'Staff Member'
-        verbose_name_plural = 'Staff Members'
-        unique_together = [['user', 'hotel']]
-        ordering = ['hotel', 'role', 'user__last_name']
+        verbose_name = "Staff Member"
+        verbose_name_plural = "Staff Members"
+        unique_together = [["user", "hotel"]]
+        ordering = ["hotel", "role", "user__last_name"]
 
     def set_default_permissions_for_role(self):
         """
@@ -75,122 +67,98 @@ class Staff(BaseModel):
         }
         """
         defaults = {
-            'manager': {
-                'reservations': {
-                    'can_create': True,
-                    'can_view': True,
-                    'can_edit': True,
-                    'can_delete': True,
-                    'can_cancel': True
+            "manager": {
+                "reservations": {
+                    "can_create": True,
+                    "can_view": True,
+                    "can_edit": True,
+                    "can_delete": True,
+                    "can_cancel": True,
                 },
-                'guests': {
-                    'can_create': True,
-                    'can_view': True,
-                    'can_edit': True,
-                    'can_delete': True
+                "guests": {
+                    "can_create": True,
+                    "can_view": True,
+                    "can_edit": True,
+                    "can_delete": True,
                 },
-                'rooms': {
-                    'can_create': True,
-                    'can_view': True,
-                    'can_edit_status': True,
-                    'can_delete': True
+                "rooms": {
+                    "can_create": True,
+                    "can_view": True,
+                    "can_edit_status": True,
+                    "can_delete": True,
                 },
-                'reports': {
-                    'can_view_financial': True,
-                    'can_view_operational': True
-                },
-                'settings': {
-                    'can_edit_hotel': True,
-                    'can_manage_staff': True
-                }
+                "reports": {"can_view_financial": True, "can_view_operational": True},
+                "settings": {"can_edit_hotel": True, "can_manage_staff": True},
             },
-            'receptionist': {
-                'reservations': {
-                    'can_create': True,
-                    'can_view': True,
-                    'can_edit': True,
-                    'can_delete': False,
-                    'can_cancel': True
+            "receptionist": {
+                "reservations": {
+                    "can_create": True,
+                    "can_view": True,
+                    "can_edit": True,
+                    "can_delete": False,
+                    "can_cancel": True,
                 },
-                'guests': {
-                    'can_create': True,
-                    'can_view': True,
-                    'can_edit': True,
-                    'can_delete': False
+                "guests": {
+                    "can_create": True,
+                    "can_view": True,
+                    "can_edit": True,
+                    "can_delete": False,
                 },
-                'rooms': {
-                    'can_create': False,
-                    'can_view': True,
-                    'can_edit_status': True,
-                    'can_delete': False
+                "rooms": {
+                    "can_create": False,
+                    "can_view": True,
+                    "can_edit_status": True,
+                    "can_delete": False,
                 },
-                'reports': {
-                    'can_view_financial': False,
-                    'can_view_operational': True
-                },
-                'settings': {
-                    'can_edit_hotel': False,
-                    'can_manage_staff': False
-                }
+                "reports": {"can_view_financial": False, "can_view_operational": True},
+                "settings": {"can_edit_hotel": False, "can_manage_staff": False},
             },
-            'housekeeping': {
-                'reservations': {
-                    'can_create': False,
-                    'can_view': True,
-                    'can_edit': False,
-                    'can_delete': False,
-                    'can_cancel': False
+            "housekeeping": {
+                "reservations": {
+                    "can_create": False,
+                    "can_view": True,
+                    "can_edit": False,
+                    "can_delete": False,
+                    "can_cancel": False,
                 },
-                'guests': {
-                    'can_create': False,
-                    'can_view': True,
-                    'can_edit': False,
-                    'can_delete': False
+                "guests": {
+                    "can_create": False,
+                    "can_view": True,
+                    "can_edit": False,
+                    "can_delete": False,
                 },
-                'rooms': {
-                    'can_create': False,
-                    'can_view': True,
-                    'can_edit_status': True,
-                    'can_delete': False
+                "rooms": {
+                    "can_create": False,
+                    "can_view": True,
+                    "can_edit_status": True,
+                    "can_delete": False,
                 },
-                'reports': {
-                    'can_view_financial': False,
-                    'can_view_operational': True
-                },
-                'settings': {
-                    'can_edit_hotel': False,
-                    'can_manage_staff': False
-                }
+                "reports": {"can_view_financial": False, "can_view_operational": True},
+                "settings": {"can_edit_hotel": False, "can_manage_staff": False},
             },
-            'maintenance': {
-                'reservations': {
-                    'can_create': False,
-                    'can_view': True,
-                    'can_edit': False,
-                    'can_delete': False,
-                    'can_cancel': False
+            "maintenance": {
+                "reservations": {
+                    "can_create": False,
+                    "can_view": True,
+                    "can_edit": False,
+                    "can_delete": False,
+                    "can_cancel": False,
                 },
-                'guests': {
-                    'can_create': False,
-                    'can_view': False,
-                    'can_edit': False,
-                    'can_delete': False
+                "guests": {
+                    "can_create": False,
+                    "can_view": False,
+                    "can_edit": False,
+                    "can_delete": False,
                 },
-                'rooms': {
-                    'can_create': False,
-                    'can_view': True,
-                    'can_edit_status': True,
-                    'can_delete': False
+                "rooms": {
+                    "can_create": False,
+                    "can_view": True,
+                    "can_edit_status": True,
+                    "can_delete": False,
                 },
-                'reports': {
-                    'can_view_financial': False,
-                    'can_view_operational': True
-                },
-                'settings': {
-                    'can_edit_hotel': False,
-                    'can_manage_staff': False
-                }
-            }
+                "reports": {"can_view_financial": False, "can_view_operational": True},
+                "settings": {"can_edit_hotel": False, "can_manage_staff": False},
+            },
         }
         self.permissions = defaults.get(self.role, {})
 
@@ -203,7 +171,7 @@ class Staff(BaseModel):
     @property
     def is_manager(self):
         """Return True if staff member is a manager"""
-        return self.role == 'manager'
+        return self.role == "manager"
 
     def __str__(self):
         """Return string representation of staff member"""

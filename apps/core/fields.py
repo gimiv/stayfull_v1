@@ -17,10 +17,8 @@ class EncryptedCharField(models.CharField):
 
     def __init__(self, *args, **kwargs):
         # Ensure we have an encryption key
-        if not hasattr(settings, 'FIELD_ENCRYPTION_KEY'):
-            raise ValueError(
-                "FIELD_ENCRYPTION_KEY must be set in settings for EncryptedCharField"
-            )
+        if not hasattr(settings, "FIELD_ENCRYPTION_KEY"):
+            raise ValueError("FIELD_ENCRYPTION_KEY must be set in settings for EncryptedCharField")
         super().__init__(*args, **kwargs)
 
     def get_cipher(self):
@@ -41,7 +39,7 @@ class EncryptedCharField(models.CharField):
             if isinstance(value, str):
                 value = value.encode()
             decrypted = cipher.decrypt(value)
-            return decrypted.decode('utf-8')
+            return decrypted.decode("utf-8")
         except Exception:
             # If decryption fails, return None
             return None
@@ -55,4 +53,4 @@ class EncryptedCharField(models.CharField):
         if isinstance(value, str):
             value = value.encode()
         encrypted = cipher.encrypt(value)
-        return encrypted.decode('utf-8')
+        return encrypted.decode("utf-8")

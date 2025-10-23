@@ -57,8 +57,8 @@ class TestReservationModel:
             check_in_date=check_in,
             check_out_date=check_out,
             adults=2,
-            rate_per_night=Decimal('150.00'),
-            status='confirmed'
+            rate_per_night=Decimal("150.00"),
+            status="confirmed",
         )
 
         assert reservation.nights == 3
@@ -75,14 +75,16 @@ class TestReservationModel:
             check_in_date=check_in,
             check_out_date=check_out,
             adults=2,
-            rate_per_night=Decimal('200.00'),
-            status='confirmed'
+            rate_per_night=Decimal("200.00"),
+            status="confirmed",
         )
 
         # 4 nights × $200 = $800
-        assert reservation.total_room_charges == Decimal('800.00')
+        assert reservation.total_room_charges == Decimal("800.00")
 
-    def test_total_amount_calculated_with_taxes_fees_discounts(self, test_hotel, test_guest, test_room_type):
+    def test_total_amount_calculated_with_taxes_fees_discounts(
+        self, test_hotel, test_guest, test_room_type
+    ):
         """Test total_amount = room_charges + taxes + fees + extras - discounts"""
         check_in = date.today() + timedelta(days=1)
         check_out = check_in + timedelta(days=2)
@@ -94,17 +96,17 @@ class TestReservationModel:
             check_in_date=check_in,
             check_out_date=check_out,
             adults=2,
-            rate_per_night=Decimal('100.00'),
-            taxes=Decimal('20.00'),
-            fees=Decimal('10.00'),
-            extras=Decimal('15.00'),
-            discounts=Decimal('25.00'),
-            status='confirmed'
+            rate_per_night=Decimal("100.00"),
+            taxes=Decimal("20.00"),
+            fees=Decimal("10.00"),
+            extras=Decimal("15.00"),
+            discounts=Decimal("25.00"),
+            status="confirmed",
         )
 
         # room_charges = 100 × 2 = 200
         # total = 200 + 20 + 10 + 15 - 25 = 220
-        assert reservation.total_amount == Decimal('220.00')
+        assert reservation.total_amount == Decimal("220.00")
 
     def test_checkout_must_be_after_checkin(self, test_hotel, test_guest, test_room_type):
         """Test ValidationError if check_out <= check_in"""
@@ -118,17 +120,19 @@ class TestReservationModel:
             check_in_date=check_in,
             check_out_date=check_out,
             adults=2,
-            rate_per_night=Decimal('150.00'),
-            status='confirmed'
+            rate_per_night=Decimal("150.00"),
+            status="confirmed",
         )
 
         with pytest.raises(ValidationError) as exc_info:
             reservation.save()
-        assert 'Check-out must be after check-in' in str(exc_info.value)
+        assert "Check-out must be after check-in" in str(exc_info.value)
 
     # ===== OCCUPANCY VALIDATION TESTS =====
 
-    def test_adults_plus_children_cannot_exceed_max_occupancy(self, test_hotel, test_guest, test_room_type):
+    def test_adults_plus_children_cannot_exceed_max_occupancy(
+        self, test_hotel, test_guest, test_room_type
+    ):
         """Test that total guests cannot exceed room_type max_occupancy"""
         check_in = date.today() + timedelta(days=1)
         check_out = check_in + timedelta(days=2)
@@ -142,15 +146,17 @@ class TestReservationModel:
             check_out_date=check_out,
             adults=3,
             children=2,  # 3 + 2 = 5 > 4 max_occupancy
-            rate_per_night=Decimal('150.00'),
-            status='confirmed'
+            rate_per_night=Decimal("150.00"),
+            status="confirmed",
         )
 
         with pytest.raises(ValidationError) as exc_info:
             reservation.save()
-        assert 'exceeds max occupancy' in str(exc_info.value)
+        assert "exceeds max occupancy" in str(exc_info.value)
 
-    def test_occupancy_validation_passes_when_within_limit(self, test_hotel, test_guest, test_room_type):
+    def test_occupancy_validation_passes_when_within_limit(
+        self, test_hotel, test_guest, test_room_type
+    ):
         """Test that occupancy validation passes when within max_occupancy"""
         check_in = date.today() + timedelta(days=1)
         check_out = check_in + timedelta(days=2)
@@ -163,15 +169,17 @@ class TestReservationModel:
             check_out_date=check_out,
             adults=2,
             children=2,  # 2 + 2 = 4, exactly at max
-            rate_per_night=Decimal('150.00'),
-            status='confirmed'
+            rate_per_night=Decimal("150.00"),
+            status="confirmed",
         )
 
         assert reservation.pk is not None
 
     # ===== OVERLAPPING RESERVATION TESTS (CRITICAL!) =====
 
-    def test_cannot_create_overlapping_reservation_same_room(self, test_hotel, test_guest, test_room, test_room_type):
+    def test_cannot_create_overlapping_reservation_same_room(
+        self, test_hotel, test_guest, test_room, test_room_type
+    ):
         """Test that overlapping reservations for the same room are blocked"""
         # Create first reservation (Jan 10-15)
         Reservation.objects.create(
@@ -182,8 +190,8 @@ class TestReservationModel:
             check_in_date=date(2025, 1, 10),
             check_out_date=date(2025, 1, 15),
             adults=2,
-            rate_per_night=Decimal('150.00'),
-            status='confirmed'
+            rate_per_night=Decimal("150.00"),
+            status="confirmed",
         )
 
         # Attempt overlapping reservation (Jan 12-17) - should fail!
@@ -196,15 +204,17 @@ class TestReservationModel:
             check_in_date=date(2025, 1, 12),  # Overlaps!
             check_out_date=date(2025, 1, 17),
             adults=2,
-            rate_per_night=Decimal('150.00'),
-            status='confirmed'
+            rate_per_night=Decimal("150.00"),
+            status="confirmed",
         )
 
         with pytest.raises(ValidationError) as exc_info:
             reservation2.save()
-        assert 'overlapping reservation' in str(exc_info.value)
+        assert "overlapping reservation" in str(exc_info.value)
 
-    def test_can_create_nonoverlapping_reservation_same_room(self, test_hotel, test_guest, test_room, test_room_type):
+    def test_can_create_nonoverlapping_reservation_same_room(
+        self, test_hotel, test_guest, test_room, test_room_type
+    ):
         """Test that non-overlapping reservations for same room are allowed"""
         # Create first reservation (Jan 10-15)
         Reservation.objects.create(
@@ -215,8 +225,8 @@ class TestReservationModel:
             check_in_date=date(2025, 1, 10),
             check_out_date=date(2025, 1, 15),
             adults=2,
-            rate_per_night=Decimal('150.00'),
-            status='confirmed'
+            rate_per_night=Decimal("150.00"),
+            status="confirmed",
         )
 
         # Create non-overlapping reservation (Jan 15-20) - check-out = next check-in is OK
@@ -229,16 +239,18 @@ class TestReservationModel:
             check_in_date=date(2025, 1, 15),  # Starts when first ends
             check_out_date=date(2025, 1, 20),
             adults=2,
-            rate_per_night=Decimal('150.00'),
-            status='confirmed'
+            rate_per_night=Decimal("150.00"),
+            status="confirmed",
         )
 
         assert reservation2.pk is not None
 
-    def test_can_create_overlapping_for_different_rooms(self, test_hotel, test_guest, test_room_type):
+    def test_can_create_overlapping_for_different_rooms(
+        self, test_hotel, test_guest, test_room_type
+    ):
         """Test that overlapping dates are OK for different rooms"""
-        room1 = RoomFactory(hotel=test_hotel, room_type=test_room_type, room_number='101')
-        room2 = RoomFactory(hotel=test_hotel, room_type=test_room_type, room_number='102')
+        room1 = RoomFactory(hotel=test_hotel, room_type=test_room_type, room_number="101")
+        room2 = RoomFactory(hotel=test_hotel, room_type=test_room_type, room_number="102")
 
         # Create reservation for room 101 (Jan 10-15)
         Reservation.objects.create(
@@ -249,8 +261,8 @@ class TestReservationModel:
             check_in_date=date(2025, 1, 10),
             check_out_date=date(2025, 1, 15),
             adults=2,
-            rate_per_night=Decimal('150.00'),
-            status='confirmed'
+            rate_per_night=Decimal("150.00"),
+            status="confirmed",
         )
 
         # Create overlapping reservation for room 102 - should work!
@@ -263,8 +275,8 @@ class TestReservationModel:
             check_in_date=date(2025, 1, 12),  # Overlapping dates OK
             check_out_date=date(2025, 1, 17),
             adults=2,
-            rate_per_night=Decimal('150.00'),
-            status='confirmed'
+            rate_per_night=Decimal("150.00"),
+            status="confirmed",
         )
 
         assert reservation2.pk is not None
@@ -283,8 +295,8 @@ class TestReservationModel:
             check_in_date=check_in,
             check_out_date=check_out,
             adults=2,
-            rate_per_night=Decimal('150.00'),
-            status='confirmed'
+            rate_per_night=Decimal("150.00"),
+            status="confirmed",
         )
 
         assert reservation.confirmation_number is not None
@@ -303,8 +315,8 @@ class TestReservationModel:
             check_in_date=check_in,
             check_out_date=check_out,
             adults=2,
-            rate_per_night=Decimal('150.00'),
-            status='confirmed'
+            rate_per_night=Decimal("150.00"),
+            status="confirmed",
         )
 
         # Create second reservation
@@ -316,8 +328,8 @@ class TestReservationModel:
             check_in_date=check_in + timedelta(days=10),
             check_out_date=check_in + timedelta(days=12),
             adults=2,
-            rate_per_night=Decimal('150.00'),
-            status='confirmed'
+            rate_per_night=Decimal("150.00"),
+            status="confirmed",
         )
 
         assert res1.confirmation_number != res2.confirmation_number
@@ -336,14 +348,14 @@ class TestReservationModel:
             check_in_date=check_in,
             check_out_date=check_out,
             adults=2,
-            rate_per_night=Decimal('150.00'),
-            status='pending'
+            rate_per_night=Decimal("150.00"),
+            status="pending",
         )
 
-        reservation.status = 'confirmed'
+        reservation.status = "confirmed"
         reservation.save()
 
-        assert reservation.status == 'confirmed'
+        assert reservation.status == "confirmed"
 
     def test_can_transition_confirmed_to_checked_in(self, test_hotel, test_guest, test_room_type):
         """Test status transition: confirmed → checked_in"""
@@ -357,14 +369,14 @@ class TestReservationModel:
             check_in_date=check_in,
             check_out_date=check_out,
             adults=2,
-            rate_per_night=Decimal('150.00'),
-            status='confirmed'
+            rate_per_night=Decimal("150.00"),
+            status="confirmed",
         )
 
-        reservation.status = 'checked_in'
+        reservation.status = "checked_in"
         reservation.save()
 
-        assert reservation.status == 'checked_in'
+        assert reservation.status == "checked_in"
 
     def test_can_transition_checked_in_to_checked_out(self, test_hotel, test_guest, test_room_type):
         """Test status transition: checked_in → checked_out"""
@@ -378,16 +390,18 @@ class TestReservationModel:
             check_in_date=check_in,
             check_out_date=check_out,
             adults=2,
-            rate_per_night=Decimal('150.00'),
-            status='checked_in'
+            rate_per_night=Decimal("150.00"),
+            status="checked_in",
         )
 
-        reservation.status = 'checked_out'
+        reservation.status = "checked_out"
         reservation.save()
 
-        assert reservation.status == 'checked_out'
+        assert reservation.status == "checked_out"
 
-    def test_can_cancel_from_any_status_except_checked_out(self, test_hotel, test_guest, test_room_type):
+    def test_can_cancel_from_any_status_except_checked_out(
+        self, test_hotel, test_guest, test_room_type
+    ):
         """Test that reservations can be cancelled from any status except checked_out"""
         check_in = date.today() + timedelta(days=1)
         check_out = check_in + timedelta(days=2)
@@ -400,14 +414,14 @@ class TestReservationModel:
             check_in_date=check_in,
             check_out_date=check_out,
             adults=2,
-            rate_per_night=Decimal('150.00'),
-            status='confirmed'
+            rate_per_night=Decimal("150.00"),
+            status="confirmed",
         )
 
-        reservation.status = 'cancelled'
+        reservation.status = "cancelled"
         reservation.save()
 
-        assert reservation.status == 'cancelled'
+        assert reservation.status == "cancelled"
 
     # ===== FOREIGN KEY CONSTRAINT TESTS =====
 
@@ -423,8 +437,8 @@ class TestReservationModel:
             check_in_date=check_in,
             check_out_date=check_out,
             adults=2,
-            rate_per_night=Decimal('150.00'),
-            status='confirmed'
+            rate_per_night=Decimal("150.00"),
+            status="confirmed",
         )
 
         # Attempt to delete guest should be blocked
@@ -444,8 +458,8 @@ class TestReservationModel:
             check_in_date=check_in,
             check_out_date=check_out,
             adults=2,
-            rate_per_night=Decimal('150.00'),
-            status='confirmed'
+            rate_per_night=Decimal("150.00"),
+            status="confirmed",
         )
 
         # Delete the room

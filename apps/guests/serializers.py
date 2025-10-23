@@ -19,14 +19,27 @@ class GuestSerializer(serializers.ModelSerializer):
     class Meta:
         model = Guest
         fields = [
-            'id', 'user', 'first_name', 'last_name', 'full_name', 'email', 'phone',
-            'date_of_birth', 'nationality',
-            'id_document_type', 'id_document_number',
-            'address', 'preferences',
-            'loyalty_tier', 'loyalty_points', 'vip_status', 'notes',
-            'created_at', 'updated_at'
+            "id",
+            "user",
+            "first_name",
+            "last_name",
+            "full_name",
+            "email",
+            "phone",
+            "date_of_birth",
+            "nationality",
+            "id_document_type",
+            "id_document_number",
+            "address",
+            "preferences",
+            "loyalty_tier",
+            "loyalty_points",
+            "vip_status",
+            "notes",
+            "created_at",
+            "updated_at",
         ]
-        read_only_fields = ['id', 'full_name', 'loyalty_points', 'created_at', 'updated_at']
+        read_only_fields = ["id", "full_name", "loyalty_points", "created_at", "updated_at"]
 
     def validate_email(self, value):
         """Ensure email is unique across all guests"""

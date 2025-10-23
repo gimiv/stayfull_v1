@@ -25,8 +25,7 @@ class ReservationFactory(DjangoModelFactory):
     hotel = factory.SubFactory(HotelFactory)
     guest = factory.SubFactory(GuestFactory)
     room_type = factory.SubFactory(
-        RoomTypeFactory,
-        hotel=factory.SelfAttribute('..hotel')  # Same hotel as reservation
+        RoomTypeFactory, hotel=factory.SelfAttribute("..hotel")  # Same hotel as reservation
     )
     room = None  # Initially unassigned (will be assigned later)
 
@@ -43,27 +42,25 @@ class ReservationFactory(DjangoModelFactory):
     children = 0
 
     # Status and source
-    status = 'confirmed'
-    source = factory.Iterator(['direct', 'ota', 'gds', 'walkin', 'corporate'])
+    status = "confirmed"
+    source = factory.Iterator(["direct", "ota", "gds", "walkin", "corporate"])
     channel = factory.LazyAttribute(
-        lambda obj: {
-            'ota': 'Booking.com',
-            'gds': 'Amadeus',
-            'corporate': 'Acme Corp'
-        }.get(obj.source, '')
+        lambda obj: {"ota": "Booking.com", "gds": "Amadeus", "corporate": "Acme Corp"}.get(
+            obj.source, ""
+        )
     )
 
     # Financial
-    rate_per_night = Decimal('199.00')
-    taxes = Decimal('25.00')
-    fees = Decimal('10.00')
-    extras = Decimal('0.00')
-    discounts = Decimal('0.00')
-    deposit_paid = Decimal('0.00')
+    rate_per_night = Decimal("199.00")
+    taxes = Decimal("25.00")
+    fees = Decimal("10.00")
+    extras = Decimal("0.00")
+    discounts = Decimal("0.00")
+    deposit_paid = Decimal("0.00")
 
     # Notes (auto-calculated fields will be set by model's save() method)
-    special_requests = ''
-    notes = ''
+    special_requests = ""
+    notes = ""
 
     # Note: nights, total_room_charges, and total_amount are auto-calculated
     # by the model's save() method, so we don't set them here

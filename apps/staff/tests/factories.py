@@ -20,11 +20,11 @@ class UserFactory(DjangoModelFactory):
     class Meta:
         model = User
 
-    username = factory.Sequence(lambda n: f'user{n}')
-    email = factory.Sequence(lambda n: f'user{n}@example.com')
-    first_name = factory.Faker('first_name')
-    last_name = factory.Faker('last_name')
-    password = factory.PostGenerationMethodCall('set_password', 'defaultpass123')
+    username = factory.Sequence(lambda n: f"user{n}")
+    email = factory.Sequence(lambda n: f"user{n}@example.com")
+    first_name = factory.Faker("first_name")
+    last_name = factory.Faker("last_name")
+    password = factory.PostGenerationMethodCall("set_password", "defaultpass123")
 
 
 class StaffFactory(DjangoModelFactory):
@@ -35,16 +35,16 @@ class StaffFactory(DjangoModelFactory):
 
     user = factory.SubFactory(UserFactory)
     hotel = factory.SubFactory(HotelFactory)
-    role = factory.Iterator(['manager', 'receptionist', 'housekeeping', 'maintenance'])
+    role = factory.Iterator(["manager", "receptionist", "housekeeping", "maintenance"])
     department = factory.LazyAttribute(
         lambda obj: {
-            'manager': 'Management',
-            'receptionist': 'Front Desk',
-            'housekeeping': 'Housekeeping',
-            'maintenance': 'Maintenance'
-        }.get(obj.role, 'General')
+            "manager": "Management",
+            "receptionist": "Front Desk",
+            "housekeeping": "Housekeeping",
+            "maintenance": "Maintenance",
+        }.get(obj.role, "General")
     )
-    shift = factory.Iterator(['morning', 'afternoon', 'evening', 'night'])
+    shift = factory.Iterator(["morning", "afternoon", "evening", "night"])
     is_active = True
     hired_at = factory.LazyFunction(
         lambda: date.today() - timedelta(days=fake.random_int(min=30, max=1825))

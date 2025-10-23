@@ -17,7 +17,7 @@ class TestFactories:
         assert hotel.pk is not None
         assert hotel.name is not None
         assert hotel.slug is not None
-        assert hotel.type in ['independent', 'chain', 'boutique']
+        assert hotel.type in ["independent", "chain", "boutique"]
         assert hotel.total_rooms > 0
         assert isinstance(hotel.address, dict)
         assert isinstance(hotel.contact, dict)
@@ -44,8 +44,8 @@ class TestFactories:
         assert room.hotel is not None
         assert room.room_type is not None
         assert room.room_number is not None
-        assert room.status in ['available', 'occupied', 'maintenance', 'blocked', 'out_of_order']
-        assert room.cleaning_status in ['clean', 'dirty', 'in_progress', 'inspected']
+        assert room.status in ["available", "occupied", "maintenance", "blocked", "out_of_order"]
+        assert room.cleaning_status in ["clean", "dirty", "in_progress", "inspected"]
 
     def test_room_factory_with_same_hotel(self):
         """Test creating multiple rooms for the same hotel"""

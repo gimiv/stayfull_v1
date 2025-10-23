@@ -45,15 +45,11 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "first_name",
-                    models.CharField(
-                        help_text="First name (1-100 characters)", max_length=100
-                    ),
+                    models.CharField(help_text="First name (1-100 characters)", max_length=100),
                 ),
                 (
                     "last_name",
-                    models.CharField(
-                        help_text="Last name (1-100 characters)", max_length=100
-                    ),
+                    models.CharField(help_text="Last name (1-100 characters)", max_length=100),
                 ),
                 (
                     "email",
@@ -185,9 +181,7 @@ class Migration(migrations.Migration):
                         fields=["last_name", "first_name"],
                         name="guests_gues_last_na_682095_idx",
                     ),
-                    models.Index(
-                        fields=["loyalty_tier"], name="guests_gues_loyalty_4d5cc5_idx"
-                    ),
+                    models.Index(fields=["loyalty_tier"], name="guests_gues_loyalty_4d5cc5_idx"),
                 ],
             },
         ),

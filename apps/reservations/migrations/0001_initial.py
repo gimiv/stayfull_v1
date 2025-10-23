@@ -98,9 +98,7 @@ class Migration(migrations.Migration):
                         decimal_places=2,
                         help_text="Nightly rate for this reservation",
                         max_digits=10,
-                        validators=[
-                            django.core.validators.MinValueValidator(Decimal("0.01"))
-                        ],
+                        validators=[django.core.validators.MinValueValidator(Decimal("0.01"))],
                     ),
                 ),
                 (
@@ -118,9 +116,7 @@ class Migration(migrations.Migration):
                         decimal_places=2,
                         default=Decimal("0.00"),
                         max_digits=10,
-                        validators=[
-                            django.core.validators.MinValueValidator(Decimal("0.00"))
-                        ],
+                        validators=[django.core.validators.MinValueValidator(Decimal("0.00"))],
                     ),
                 ),
                 (
@@ -129,9 +125,7 @@ class Migration(migrations.Migration):
                         decimal_places=2,
                         default=Decimal("0.00"),
                         max_digits=10,
-                        validators=[
-                            django.core.validators.MinValueValidator(Decimal("0.00"))
-                        ],
+                        validators=[django.core.validators.MinValueValidator(Decimal("0.00"))],
                     ),
                 ),
                 (
@@ -141,9 +135,7 @@ class Migration(migrations.Migration):
                         default=Decimal("0.00"),
                         help_text="Additional charges (room service, minibar, etc.)",
                         max_digits=10,
-                        validators=[
-                            django.core.validators.MinValueValidator(Decimal("0.00"))
-                        ],
+                        validators=[django.core.validators.MinValueValidator(Decimal("0.00"))],
                     ),
                 ),
                 (
@@ -152,9 +144,7 @@ class Migration(migrations.Migration):
                         decimal_places=2,
                         default=Decimal("0.00"),
                         max_digits=10,
-                        validators=[
-                            django.core.validators.MinValueValidator(Decimal("0.00"))
-                        ],
+                        validators=[django.core.validators.MinValueValidator(Decimal("0.00"))],
                     ),
                 ),
                 (
@@ -172,9 +162,7 @@ class Migration(migrations.Migration):
                         decimal_places=2,
                         default=Decimal("0.00"),
                         max_digits=10,
-                        validators=[
-                            django.core.validators.MinValueValidator(Decimal("0.00"))
-                        ],
+                        validators=[django.core.validators.MinValueValidator(Decimal("0.00"))],
                     ),
                 ),
                 (
@@ -270,9 +258,7 @@ class Migration(migrations.Migration):
                         fields=["check_in_date", "check_out_date"],
                         name="reservation_check_i_e85e52_idx",
                     ),
-                    models.Index(
-                        fields=["status"], name="reservation_status_f1a03a_idx"
-                    ),
+                    models.Index(fields=["status"], name="reservation_status_f1a03a_idx"),
                 ],
             },
         ),

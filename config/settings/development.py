@@ -8,14 +8,18 @@ from .base import *
 DEBUG = True
 
 # Additional apps for development
-INSTALLED_APPS = ['corsheaders'] + INSTALLED_APPS + ['debug_toolbar']
+INSTALLED_APPS = ["corsheaders"] + INSTALLED_APPS + ["debug_toolbar"]
 
 # Middleware for CORS and Debug Toolbar
-MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
-] + MIDDLEWARE + [
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
-]
+MIDDLEWARE = (
+    [
+        "corsheaders.middleware.CorsMiddleware",
+    ]
+    + MIDDLEWARE
+    + [
+        "debug_toolbar.middleware.DebugToolbarMiddleware",
+    ]
+)
 
 # CORS settings (development only - allow frontend access)
 CORS_ALLOWED_ORIGINS = [
@@ -31,17 +35,17 @@ INTERNAL_IPS = [
 
 # Database connection debugging (optional)
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
         },
     },
-    'loggers': {
-        'django.db.backends': {
-            'handlers': ['console'],
-            'level': 'INFO',  # Change to DEBUG to see SQL queries
+    "loggers": {
+        "django.db.backends": {
+            "handlers": ["console"],
+            "level": "INFO",  # Change to DEBUG to see SQL queries
         },
     },
 }

@@ -25,19 +25,19 @@ class TestHotelModel:
                 "city": "New York",
                 "state": "NY",
                 "postal_code": "10001",
-                "country": "US"
+                "country": "US",
             },
             contact={
                 "phone": "+1-555-0123",
                 "email": "info@grandplaza.com",
-                "website": "https://grandplaza.com"
+                "website": "https://grandplaza.com",
             },
             timezone="America/New_York",
             currency="USD",
             languages=["en", "es"],
             check_in_time=time(15, 0),
             check_out_time=time(11, 0),
-            total_rooms=100
+            total_rooms=100,
         )
 
         assert hotel.id is not None
@@ -54,14 +54,24 @@ class TestHotelModel:
             name="Hotel One",
             slug="unique-slug",
             type="independent",
-            address={"street_address": "123 St", "city": "NYC", "state": "NY", "postal_code": "10001", "country": "US"},
-            contact={"phone": "+1-555-0001", "email": "one@hotel.com", "website": "https://one.com"},
+            address={
+                "street_address": "123 St",
+                "city": "NYC",
+                "state": "NY",
+                "postal_code": "10001",
+                "country": "US",
+            },
+            contact={
+                "phone": "+1-555-0001",
+                "email": "one@hotel.com",
+                "website": "https://one.com",
+            },
             timezone="America/New_York",
             currency="USD",
             languages=["en"],
             check_in_time=time(15, 0),
             check_out_time=time(11, 0),
-            total_rooms=50
+            total_rooms=50,
         )
 
         # Attempt to create another hotel with same slug
@@ -70,14 +80,24 @@ class TestHotelModel:
                 name="Hotel Two",
                 slug="unique-slug",  # Duplicate slug
                 type="boutique",
-                address={"street_address": "456 Ave", "city": "NYC", "state": "NY", "postal_code": "10002", "country": "US"},
-                contact={"phone": "+1-555-0002", "email": "two@hotel.com", "website": "https://two.com"},
+                address={
+                    "street_address": "456 Ave",
+                    "city": "NYC",
+                    "state": "NY",
+                    "postal_code": "10002",
+                    "country": "US",
+                },
+                contact={
+                    "phone": "+1-555-0002",
+                    "email": "two@hotel.com",
+                    "website": "https://two.com",
+                },
                 timezone="America/New_York",
                 currency="USD",
                 languages=["en"],
                 check_in_time=time(15, 0),
                 check_out_time=time(11, 0),
-                total_rooms=75
+                total_rooms=75,
             )
 
     def test_hotel_check_out_time_before_check_in_time(self):
@@ -86,14 +106,24 @@ class TestHotelModel:
             name="Time Test Hotel",
             slug="time-test-hotel",
             type="independent",
-            address={"street_address": "789 Blvd", "city": "NYC", "state": "NY", "postal_code": "10003", "country": "US"},
-            contact={"phone": "+1-555-0003", "email": "time@hotel.com", "website": "https://time.com"},
+            address={
+                "street_address": "789 Blvd",
+                "city": "NYC",
+                "state": "NY",
+                "postal_code": "10003",
+                "country": "US",
+            },
+            contact={
+                "phone": "+1-555-0003",
+                "email": "time@hotel.com",
+                "website": "https://time.com",
+            },
             timezone="America/New_York",
             currency="USD",
             languages=["en"],
             check_in_time=time(15, 0),  # 3:00 PM
             check_out_time=time(11, 0),  # 11:00 AM
-            total_rooms=60
+            total_rooms=60,
         )
 
         # This should be valid: checkout (11:00) is before checkin (15:00)
@@ -106,14 +136,24 @@ class TestHotelModel:
                 name="Zero Rooms Hotel",
                 slug="zero-rooms",
                 type="independent",
-                address={"street_address": "000 St", "city": "NYC", "state": "NY", "postal_code": "10000", "country": "US"},
-                contact={"phone": "+1-555-0000", "email": "zero@hotel.com", "website": "https://zero.com"},
+                address={
+                    "street_address": "000 St",
+                    "city": "NYC",
+                    "state": "NY",
+                    "postal_code": "10000",
+                    "country": "US",
+                },
+                contact={
+                    "phone": "+1-555-0000",
+                    "email": "zero@hotel.com",
+                    "website": "https://zero.com",
+                },
                 timezone="America/New_York",
                 currency="USD",
                 languages=["en"],
                 check_in_time=time(15, 0),
                 check_out_time=time(11, 0),
-                total_rooms=0  # Invalid: must be > 0
+                total_rooms=0,  # Invalid: must be > 0
             )
             hotel.full_clean()
 
@@ -124,14 +164,24 @@ class TestHotelModel:
                 name="No Language Hotel",
                 slug="no-language",
                 type="independent",
-                address={"street_address": "111 St", "city": "NYC", "state": "NY", "postal_code": "10111", "country": "US"},
-                contact={"phone": "+1-555-0111", "email": "lang@hotel.com", "website": "https://lang.com"},
+                address={
+                    "street_address": "111 St",
+                    "city": "NYC",
+                    "state": "NY",
+                    "postal_code": "10111",
+                    "country": "US",
+                },
+                contact={
+                    "phone": "+1-555-0111",
+                    "email": "lang@hotel.com",
+                    "website": "https://lang.com",
+                },
                 timezone="America/New_York",
                 currency="USD",
                 languages=[],  # Invalid: empty array
                 check_in_time=time(15, 0),
                 check_out_time=time(11, 0),
-                total_rooms=100
+                total_rooms=100,
             )
             hotel.full_clean()
 
@@ -142,14 +192,24 @@ class TestHotelModel:
                 name="Invalid Type Hotel",
                 slug="invalid-type",
                 type="resort",  # Invalid: not in choices
-                address={"street_address": "222 St", "city": "NYC", "state": "NY", "postal_code": "10222", "country": "US"},
-                contact={"phone": "+1-555-0222", "email": "type@hotel.com", "website": "https://type.com"},
+                address={
+                    "street_address": "222 St",
+                    "city": "NYC",
+                    "state": "NY",
+                    "postal_code": "10222",
+                    "country": "US",
+                },
+                contact={
+                    "phone": "+1-555-0222",
+                    "email": "type@hotel.com",
+                    "website": "https://type.com",
+                },
                 timezone="America/New_York",
                 currency="USD",
                 languages=["en"],
                 check_in_time=time(15, 0),
                 check_out_time=time(11, 0),
-                total_rooms=100
+                total_rooms=100,
             )
             hotel.full_clean()
 
@@ -159,14 +219,24 @@ class TestHotelModel:
             name="String Test Hotel",
             slug="string-test",
             type="chain",
-            address={"street_address": "333 St", "city": "NYC", "state": "NY", "postal_code": "10333", "country": "US"},
-            contact={"phone": "+1-555-0333", "email": "string@hotel.com", "website": "https://string.com"},
+            address={
+                "street_address": "333 St",
+                "city": "NYC",
+                "state": "NY",
+                "postal_code": "10333",
+                "country": "US",
+            },
+            contact={
+                "phone": "+1-555-0333",
+                "email": "string@hotel.com",
+                "website": "https://string.com",
+            },
             timezone="America/New_York",
             currency="USD",
             languages=["en"],
             check_in_time=time(15, 0),
             check_out_time=time(11, 0),
-            total_rooms=100
+            total_rooms=100,
         )
 
         assert str(hotel) == "String Test Hotel"
@@ -178,14 +248,24 @@ class TestHotelModel:
             slug="marriott-downtown",
             brand="Marriott",  # Optional brand field
             type="chain",
-            address={"street_address": "444 St", "city": "NYC", "state": "NY", "postal_code": "10444", "country": "US"},
-            contact={"phone": "+1-555-0444", "email": "brand@hotel.com", "website": "https://brand.com"},
+            address={
+                "street_address": "444 St",
+                "city": "NYC",
+                "state": "NY",
+                "postal_code": "10444",
+                "country": "US",
+            },
+            contact={
+                "phone": "+1-555-0444",
+                "email": "brand@hotel.com",
+                "website": "https://brand.com",
+            },
             timezone="America/New_York",
             currency="USD",
             languages=["en", "es", "fr"],
             check_in_time=time(16, 0),
             check_out_time=time(12, 0),
-            total_rooms=200
+            total_rooms=200,
         )
 
         assert hotel.brand == "Marriott"
@@ -197,22 +277,32 @@ class TestHotelModel:
             "booking_lead_time_days": 365,
             "min_stay_nights": 1,
             "max_stay_nights": 30,
-            "cancellation_policy": "flexible"
+            "cancellation_policy": "flexible",
         }
 
         hotel = Hotel.objects.create(
             name="Settings Hotel",
             slug="settings-hotel",
             type="boutique",
-            address={"street_address": "555 St", "city": "NYC", "state": "NY", "postal_code": "10555", "country": "US"},
-            contact={"phone": "+1-555-0555", "email": "settings@hotel.com", "website": "https://settings.com"},
+            address={
+                "street_address": "555 St",
+                "city": "NYC",
+                "state": "NY",
+                "postal_code": "10555",
+                "country": "US",
+            },
+            contact={
+                "phone": "+1-555-0555",
+                "email": "settings@hotel.com",
+                "website": "https://settings.com",
+            },
             timezone="America/New_York",
             currency="USD",
             languages=["en"],
             check_in_time=time(15, 0),
             check_out_time=time(11, 0),
             total_rooms=50,
-            settings=settings
+            settings=settings,
         )
 
         assert hotel.settings["booking_lead_time_days"] == 365
@@ -229,14 +319,24 @@ class TestRoomTypeModel:
             name="Test Hotel",
             slug="test-hotel",
             type="independent",
-            address={"street_address": "123 St", "city": "NYC", "state": "NY", "postal_code": "10001", "country": "US"},
-            contact={"phone": "+1-555-0001", "email": "test@hotel.com", "website": "https://test.com"},
+            address={
+                "street_address": "123 St",
+                "city": "NYC",
+                "state": "NY",
+                "postal_code": "10001",
+                "country": "US",
+            },
+            contact={
+                "phone": "+1-555-0001",
+                "email": "test@hotel.com",
+                "website": "https://test.com",
+            },
             timezone="America/New_York",
             currency="USD",
             languages=["en"],
             check_in_time=time(15, 0),
             check_out_time=time(11, 0),
-            total_rooms=100
+            total_rooms=100,
         )
 
         room_type = RoomType.objects.create(
@@ -249,11 +349,8 @@ class TestRoomTypeModel:
             max_children=2,
             base_price=250.00,
             size_sqm=45.5,
-            bed_configuration=[
-                {"type": "king", "count": 1},
-                {"type": "twin", "count": 2}
-            ],
-            amenities=["wifi", "tv", "mini_fridge", "safe"]
+            bed_configuration=[{"type": "king", "count": 1}, {"type": "twin", "count": 2}],
+            amenities=["wifi", "tv", "mini_fridge", "safe"],
         )
 
         assert room_type.id is not None
@@ -269,14 +366,24 @@ class TestRoomTypeModel:
             name="Unique Code Hotel",
             slug="unique-code-hotel",
             type="boutique",
-            address={"street_address": "456 Ave", "city": "NYC", "state": "NY", "postal_code": "10002", "country": "US"},
-            contact={"phone": "+1-555-0002", "email": "unique@hotel.com", "website": "https://unique.com"},
+            address={
+                "street_address": "456 Ave",
+                "city": "NYC",
+                "state": "NY",
+                "postal_code": "10002",
+                "country": "US",
+            },
+            contact={
+                "phone": "+1-555-0002",
+                "email": "unique@hotel.com",
+                "website": "https://unique.com",
+            },
             timezone="America/New_York",
             currency="USD",
             languages=["en"],
             check_in_time=time(15, 0),
             check_out_time=time(11, 0),
-            total_rooms=50
+            total_rooms=50,
         )
 
         RoomType.objects.create(
@@ -288,7 +395,7 @@ class TestRoomTypeModel:
             max_children=0,
             base_price=100.00,
             bed_configuration=[{"type": "queen", "count": 1}],
-            amenities=["wifi"]
+            amenities=["wifi"],
         )
 
         # Same code in same hotel should fail
@@ -302,7 +409,7 @@ class TestRoomTypeModel:
                 max_children=0,
                 base_price=120.00,
                 bed_configuration=[{"type": "queen", "count": 1}],
-                amenities=["wifi", "tv"]
+                amenities=["wifi", "tv"],
             )
 
     def test_roomtype_max_occupancy_equals_adults_plus_children(self):
@@ -311,14 +418,24 @@ class TestRoomTypeModel:
             name="Validation Hotel",
             slug="validation-hotel",
             type="chain",
-            address={"street_address": "789 Blvd", "city": "NYC", "state": "NY", "postal_code": "10003", "country": "US"},
-            contact={"phone": "+1-555-0003", "email": "valid@hotel.com", "website": "https://valid.com"},
+            address={
+                "street_address": "789 Blvd",
+                "city": "NYC",
+                "state": "NY",
+                "postal_code": "10003",
+                "country": "US",
+            },
+            contact={
+                "phone": "+1-555-0003",
+                "email": "valid@hotel.com",
+                "website": "https://valid.com",
+            },
             timezone="America/New_York",
             currency="USD",
             languages=["en"],
             check_in_time=time(15, 0),
             check_out_time=time(11, 0),
-            total_rooms=75
+            total_rooms=75,
         )
 
         with pytest.raises(ValidationError):
@@ -331,7 +448,7 @@ class TestRoomTypeModel:
                 max_children=1,  # 2 + 1 = 3, not 4!
                 base_price=150.00,
                 bed_configuration=[{"type": "king", "count": 1}],
-                amenities=["wifi"]
+                amenities=["wifi"],
             )
             room_type.full_clean()
 
@@ -341,14 +458,24 @@ class TestRoomTypeModel:
             name="Price Hotel",
             slug="price-hotel",
             type="independent",
-            address={"street_address": "111 St", "city": "NYC", "state": "NY", "postal_code": "10111", "country": "US"},
-            contact={"phone": "+1-555-0111", "email": "price@hotel.com", "website": "https://price.com"},
+            address={
+                "street_address": "111 St",
+                "city": "NYC",
+                "state": "NY",
+                "postal_code": "10111",
+                "country": "US",
+            },
+            contact={
+                "phone": "+1-555-0111",
+                "email": "price@hotel.com",
+                "website": "https://price.com",
+            },
             timezone="America/New_York",
             currency="USD",
             languages=["en"],
             check_in_time=time(15, 0),
             check_out_time=time(11, 0),
-            total_rooms=60
+            total_rooms=60,
         )
 
         with pytest.raises(ValidationError):
@@ -361,7 +488,7 @@ class TestRoomTypeModel:
                 max_children=0,
                 base_price=0.00,  # Invalid: must be > 0
                 bed_configuration=[{"type": "twin", "count": 2}],
-                amenities=["wifi"]
+                amenities=["wifi"],
             )
             room_type.full_clean()
 
@@ -371,14 +498,24 @@ class TestRoomTypeModel:
             name="Bed Hotel",
             slug="bed-hotel",
             type="boutique",
-            address={"street_address": "222 St", "city": "NYC", "state": "NY", "postal_code": "10222", "country": "US"},
-            contact={"phone": "+1-555-0222", "email": "bed@hotel.com", "website": "https://bed.com"},
+            address={
+                "street_address": "222 St",
+                "city": "NYC",
+                "state": "NY",
+                "postal_code": "10222",
+                "country": "US",
+            },
+            contact={
+                "phone": "+1-555-0222",
+                "email": "bed@hotel.com",
+                "website": "https://bed.com",
+            },
             timezone="America/New_York",
             currency="USD",
             languages=["en"],
             check_in_time=time(15, 0),
             check_out_time=time(11, 0),
-            total_rooms=40
+            total_rooms=40,
         )
 
         with pytest.raises(ValidationError):
@@ -391,7 +528,7 @@ class TestRoomTypeModel:
                 max_children=0,
                 base_price=100.00,
                 bed_configuration=[],  # Invalid: empty array
-                amenities=["wifi"]
+                amenities=["wifi"],
             )
             room_type.full_clean()
 
@@ -401,14 +538,24 @@ class TestRoomTypeModel:
             name="String Hotel",
             slug="string-hotel-rt",
             type="chain",
-            address={"street_address": "333 St", "city": "NYC", "state": "NY", "postal_code": "10333", "country": "US"},
-            contact={"phone": "+1-555-0333", "email": "string@hotel.com", "website": "https://string.com"},
+            address={
+                "street_address": "333 St",
+                "city": "NYC",
+                "state": "NY",
+                "postal_code": "10333",
+                "country": "US",
+            },
+            contact={
+                "phone": "+1-555-0333",
+                "email": "string@hotel.com",
+                "website": "https://string.com",
+            },
             timezone="America/New_York",
             currency="USD",
             languages=["en"],
             check_in_time=time(15, 0),
             check_out_time=time(11, 0),
-            total_rooms=100
+            total_rooms=100,
         )
 
         room_type = RoomType.objects.create(
@@ -420,7 +567,7 @@ class TestRoomTypeModel:
             max_children=2,
             base_price=500.00,
             bed_configuration=[{"type": "king", "count": 2}],
-            amenities=["wifi", "tv", "balcony"]
+            amenities=["wifi", "tv", "balcony"],
         )
 
         assert str(room_type) == "Presidential Suite (String Hotel)"
@@ -436,14 +583,24 @@ class TestRoomModel:
             name="Room Test Hotel",
             slug="room-test-hotel",
             type="independent",
-            address={"street_address": "123 St", "city": "NYC", "state": "NY", "postal_code": "10001", "country": "US"},
-            contact={"phone": "+1-555-0001", "email": "room@hotel.com", "website": "https://room.com"},
+            address={
+                "street_address": "123 St",
+                "city": "NYC",
+                "state": "NY",
+                "postal_code": "10001",
+                "country": "US",
+            },
+            contact={
+                "phone": "+1-555-0001",
+                "email": "room@hotel.com",
+                "website": "https://room.com",
+            },
             timezone="America/New_York",
             currency="USD",
             languages=["en"],
             check_in_time=time(15, 0),
             check_out_time=time(11, 0),
-            total_rooms=100
+            total_rooms=100,
         )
 
         room_type = RoomType.objects.create(
@@ -455,7 +612,7 @@ class TestRoomModel:
             max_children=0,
             base_price=100.00,
             bed_configuration=[{"type": "queen", "count": 1}],
-            amenities=["wifi", "tv"]
+            amenities=["wifi", "tv"],
         )
 
         room = Room.objects.create(
@@ -464,7 +621,7 @@ class TestRoomModel:
             room_number="101",
             floor=1,
             status="available",
-            cleaning_status="clean"
+            cleaning_status="clean",
         )
 
         assert room.id is not None
@@ -480,14 +637,24 @@ class TestRoomModel:
             name="Unique Room Hotel",
             slug="unique-room-hotel",
             type="boutique",
-            address={"street_address": "456 Ave", "city": "NYC", "state": "NY", "postal_code": "10002", "country": "US"},
-            contact={"phone": "+1-555-0002", "email": "uniqueroom@hotel.com", "website": "https://uniqueroom.com"},
+            address={
+                "street_address": "456 Ave",
+                "city": "NYC",
+                "state": "NY",
+                "postal_code": "10002",
+                "country": "US",
+            },
+            contact={
+                "phone": "+1-555-0002",
+                "email": "uniqueroom@hotel.com",
+                "website": "https://uniqueroom.com",
+            },
             timezone="America/New_York",
             currency="USD",
             languages=["en"],
             check_in_time=time(15, 0),
             check_out_time=time(11, 0),
-            total_rooms=50
+            total_rooms=50,
         )
 
         room_type = RoomType.objects.create(
@@ -499,7 +666,7 @@ class TestRoomModel:
             max_children=1,
             base_price=150.00,
             bed_configuration=[{"type": "king", "count": 1}],
-            amenities=["wifi"]
+            amenities=["wifi"],
         )
 
         Room.objects.create(
@@ -508,7 +675,7 @@ class TestRoomModel:
             room_number="201",
             floor=2,
             status="available",
-            cleaning_status="clean"
+            cleaning_status="clean",
         )
 
         # Same room number in same hotel should fail
@@ -519,7 +686,7 @@ class TestRoomModel:
                 room_number="201",  # Duplicate
                 floor=2,
                 status="available",
-                cleaning_status="clean"
+                cleaning_status="clean",
             )
 
     def test_room_status_validation(self):
@@ -528,14 +695,24 @@ class TestRoomModel:
             name="Status Hotel",
             slug="status-hotel",
             type="chain",
-            address={"street_address": "789 Blvd", "city": "NYC", "state": "NY", "postal_code": "10003", "country": "US"},
-            contact={"phone": "+1-555-0003", "email": "status@hotel.com", "website": "https://status.com"},
+            address={
+                "street_address": "789 Blvd",
+                "city": "NYC",
+                "state": "NY",
+                "postal_code": "10003",
+                "country": "US",
+            },
+            contact={
+                "phone": "+1-555-0003",
+                "email": "status@hotel.com",
+                "website": "https://status.com",
+            },
             timezone="America/New_York",
             currency="USD",
             languages=["en"],
             check_in_time=time(15, 0),
             check_out_time=time(11, 0),
-            total_rooms=75
+            total_rooms=75,
         )
 
         room_type = RoomType.objects.create(
@@ -547,7 +724,7 @@ class TestRoomModel:
             max_children=1,
             base_price=200.00,
             bed_configuration=[{"type": "king", "count": 1}],
-            amenities=["wifi", "tv"]
+            amenities=["wifi", "tv"],
         )
 
         with pytest.raises(ValidationError):
@@ -557,7 +734,7 @@ class TestRoomModel:
                 room_number="301",
                 floor=3,
                 status="invalid_status",  # Invalid
-                cleaning_status="clean"
+                cleaning_status="clean",
             )
             room.full_clean()
 
@@ -567,14 +744,24 @@ class TestRoomModel:
             name="String Room Hotel",
             slug="string-room-hotel",
             type="independent",
-            address={"street_address": "111 St", "city": "NYC", "state": "NY", "postal_code": "10111", "country": "US"},
-            contact={"phone": "+1-555-0111", "email": "stringroom@hotel.com", "website": "https://stringroom.com"},
+            address={
+                "street_address": "111 St",
+                "city": "NYC",
+                "state": "NY",
+                "postal_code": "10111",
+                "country": "US",
+            },
+            contact={
+                "phone": "+1-555-0111",
+                "email": "stringroom@hotel.com",
+                "website": "https://stringroom.com",
+            },
             timezone="America/New_York",
             currency="USD",
             languages=["en"],
             check_in_time=time(15, 0),
             check_out_time=time(11, 0),
-            total_rooms=60
+            total_rooms=60,
         )
 
         room_type = RoomType.objects.create(
@@ -586,7 +773,7 @@ class TestRoomModel:
             max_children=0,
             base_price=100.00,
             bed_configuration=[{"type": "queen", "count": 1}],
-            amenities=["wifi"]
+            amenities=["wifi"],
         )
 
         room = Room.objects.create(
@@ -595,7 +782,7 @@ class TestRoomModel:
             room_number="A-102",
             floor=1,
             status="available",
-            cleaning_status="clean"
+            cleaning_status="clean",
         )
 
         assert str(room) == "Room A-102 (String Room Hotel)"

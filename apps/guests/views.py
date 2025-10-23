@@ -24,18 +24,19 @@ class GuestViewSet(viewsets.ModelViewSet):
 
     Important: Handles encrypted ID document fields transparently
     """
+
     queryset = Guest.objects.all()
     serializer_class = GuestSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['loyalty_tier', 'vip_status', 'nationality']
-    search_fields = ['email', 'first_name', 'last_name', 'phone']
-    ordering_fields = ['first_name', 'last_name', 'email', 'created_at', 'loyalty_points']
-    ordering = ['-created_at']
+    filterset_fields = ["loyalty_tier", "vip_status", "nationality"]
+    search_fields = ["email", "first_name", "last_name", "phone"]
+    ordering_fields = ["first_name", "last_name", "email", "created_at", "loyalty_points"]
+    ordering = ["-created_at"]
 
     def get_queryset(self):
         """
         Return all guests ordered by creation date.
         Support filtering via query params.
         """
-        return Guest.objects.all().order_by('-created_at')
+        return Guest.objects.all().order_by("-created_at")

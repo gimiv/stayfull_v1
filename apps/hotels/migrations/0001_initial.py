@@ -41,9 +41,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "name",
-                    models.CharField(
-                        help_text="Hotel name (3-200 characters)", max_length=200
-                    ),
+                    models.CharField(help_text="Hotel name (3-200 characters)", max_length=200),
                 ),
                 (
                     "slug",
@@ -82,9 +80,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "contact",
-                    models.JSONField(
-                        help_text="Contact information (phone, email, website)"
-                    ),
+                    models.JSONField(help_text="Contact information (phone, email, website)"),
                 ),
                 (
                     "timezone",
@@ -111,9 +107,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "check_out_time",
-                    models.TimeField(
-                        help_text="Default check-out time (e.g., '11:00')"
-                    ),
+                    models.TimeField(help_text="Default check-out time (e.g., '11:00')"),
                 ),
                 (
                     "total_rooms",
@@ -141,9 +135,7 @@ class Migration(migrations.Migration):
                 "ordering": ["name"],
                 "indexes": [
                     models.Index(fields=["slug"], name="hotels_hote_slug_ae692c_idx"),
-                    models.Index(
-                        fields=["is_active"], name="hotels_hote_is_acti_64ad6f_idx"
-                    ),
+                    models.Index(fields=["is_active"], name="hotels_hote_is_acti_64ad6f_idx"),
                 ],
             },
         ),
@@ -183,9 +175,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "code",
-                    models.CharField(
-                        help_text="Short code (e.g., 'DLX', 'STD')", max_length=20
-                    ),
+                    models.CharField(help_text="Short code (e.g., 'DLX', 'STD')", max_length=20),
                 ),
                 (
                     "description",
@@ -251,15 +241,11 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "images",
-                    models.JSONField(
-                        blank=True, help_text="Room photos with URLs", null=True
-                    ),
+                    models.JSONField(blank=True, help_text="Room photos with URLs", null=True),
                 ),
                 (
                     "is_active",
-                    models.BooleanField(
-                        default=True, help_text="Available for booking"
-                    ),
+                    models.BooleanField(default=True, help_text="Available for booking"),
                 ),
                 (
                     "display_order",
@@ -354,9 +340,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "features",
-                    models.JSONField(
-                        blank=True, help_text="Room-specific features", null=True
-                    ),
+                    models.JSONField(blank=True, help_text="Room-specific features", null=True),
                 ),
                 (
                     "notes",
@@ -369,9 +353,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "is_active",
-                    models.BooleanField(
-                        default=True, help_text="Available for assignment"
-                    ),
+                    models.BooleanField(default=True, help_text="Available for assignment"),
                 ),
                 (
                     "hotel",
@@ -410,15 +392,11 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="room",
-            index=models.Index(
-                fields=["hotel", "status"], name="hotels_room_hotel_i_aa593c_idx"
-            ),
+            index=models.Index(fields=["hotel", "status"], name="hotels_room_hotel_i_aa593c_idx"),
         ),
         migrations.AddIndex(
             model_name="room",
-            index=models.Index(
-                fields=["room_type"], name="hotels_room_room_ty_bf3be1_idx"
-            ),
+            index=models.Index(fields=["room_type"], name="hotels_room_room_ty_bf3be1_idx"),
         ),
         migrations.AlterUniqueTogether(
             name="room",

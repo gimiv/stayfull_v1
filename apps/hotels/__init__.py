@@ -1,1 +1,1 @@
-default_app_config = 'apps.hotels.apps.HotelsConfig'
+default_app_config = "apps.hotels.apps.HotelsConfig"
