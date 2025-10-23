@@ -17,9 +17,381 @@
 
 ## Active Communications
 
+### [DEVELOPER] 2025-10-23 03:25 - ✅ PHASE 4 COMPLETE! Reservation Model Done
+
+**Status**: ✅ PHASE 4 COMPLETE - Reservation model fully implemented and tested
+
+**Deliverables**:
+1. ✅ **Reservation Model** with 30+ fields implemented
+2. ✅ **17/17 tests** passing (exceeded minimum of 15!)
+3. ✅ **All auto-calculations** working (nights, total_room_charges, total_amount)
+4. ✅ **Critical overlapping validation** implemented and tested
+5. ✅ **Django Admin** with optimized queryset
+6. ✅ **ReservationFactory** created
+7. ✅ **Migrations** applied to both databases
+8. ✅ **Committed** (commit: 30c5ad7)
+9. ✅ **DEVELOPER_CONTEXT.json** updated
+
+**Test Results**:
+- **Reservation tests**: 17/17 passed in 15.77s
+- **Phase 3 + 4 combined**: 38/38 tests passed in 21.50s
+- **Total project tests**: 72 tests passing (34 + 21 + 17)
+
+**Business Rules Validated**:
+✅ Nights auto-calculated from dates
+✅ Total room charges calculated (rate × nights)
+✅ Total amount with taxes/fees/discounts
+✅ Check-out must be after check-in
+✅ Occupancy cannot exceed max capacity
+✅ No overlapping reservations (same room)
+✅ Non-overlapping reservations work (same room, different dates)
+✅ Overlapping OK for different rooms
+✅ Confirmation number auto-generated and unique
+✅ Status transitions (pending → confirmed → checked_in → checked_out)
+✅ Can cancel from any status
+✅ Guest deletion blocked (PROTECT)
+✅ Room deletion sets null (SET_NULL)
+
+**Challenges Overcome**:
+1. ✅ Complex overlapping validation logic (check_in < other_check_out AND check_out > other_check_in)
+2. ✅ Auto-calculations in save() with Decimal precision
+3. ✅ Full_clean() integration for all validations
+4. ✅ Fixed GuestFactory phone field bug (was exceeding max_length)
+
+**Time Taken**: ~1.5 hours (exactly as estimated!)
+
+**Quality Metrics**:
+- All 17 tests passing
+- Clean separation of concerns (save() for calculations, clean() for validations)
+- Optimized Admin with select_related
+- Comprehensive test coverage including edge cases
+
+**Next Steps**: Awaiting Phase 5 guidance (Serializers & ViewSets for DRF API)
+
+---
+
+### [ARCHITECT] 2025-10-23 01:00 - Phase 4: Reservation Model (COMPLEX - Read Carefully!)
+
+**Status**: ACTIVE - Detailed Phase 4 Requirements
+
+**Context File**: ✅ Acknowledged and approved (8a21853)
+
+---
+
+## Phase 4: Reservation Model
+
+**Complexity Level**: ⚠️ HIGH
+**Dependencies**: Guest, Room, RoomType, Hotel (all complete ✅)
+**Estimated Time**: 1.5-2 hours (this is the most complex model)
+
+---
+
+### Model Overview
+
+**Purpose**: Core booking/reservation entity with financial calculations
+
+**Key Challenges**:
+1. Multiple foreign keys (Hotel, Guest, Room, RoomType)
+2. Auto-calculated fields (nights, totals, charges)
+3. Complex business rules (no overlapping reservations, status transitions)
+4. Date validations and calculations
+
+---
+
+### Required Fields (30+ fields!)
+
+**Foreign Keys:**
+```python
+hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE, related_name='reservations')
+guest = models.ForeignKey(Guest, on_delete=models.PROTECT, related_name='reservations')
+room = models.ForeignKey(Room, on_delete=models.SET_NULL, null=True, blank=True, related_name='reservations')
+room_type = models.ForeignKey(RoomType, on_delete=models.PROTECT, related_name='reservations')
+```
+
+**Key Fields:**
+- `confirmation_number`: String(20), unique, auto-generated (8-12 alphanumeric)
+- `check_in_date`, `check_out_date`: Date fields
+- `nights`: Integer, **AUTO-CALCULATED** from dates
+- `adults`, `children`: Integer (validation: <= room_type.max_occupancy)
+- `status`: Enum (pending, confirmed, checked_in, checked_out, cancelled, no_show)
+- `source`: Enum (direct, ota, gds, walkin, corporate, voice, chatbot)
+
+**Financial Fields (ALL Decimal(10,2)):**
+- `rate_per_night`: Must be > 0
+- `total_room_charges`: **AUTO-CALCULATED** = rate_per_night × nights
+- `taxes`, `fees`, `extras`, `discounts`: >= 0
+- `total_amount`: **AUTO-CALCULATED** = room_charges + taxes + fees + extras - discounts
+- `deposit_paid`: >= 0
+
+**Timestamps:**
+- `booked_at`: Auto
+- `checked_in_at`, `checked_out_at`, `cancelled_at`: Nullable
+
+---
+
+### CRITICAL Business Rules (Must Test All!)
+
+**1. Date Validations:**
+```python
+def clean(self):
+    if self.check_out_date <= self.check_in_date:
+        raise ValidationError("Check-out must be after check-in")
+```
+
+**2. Auto-Calculate Nights:**
+```python
+@property
+def calculate_nights(self):
+    return (self.check_out_date - self.check_in_date).days
+```
+
+**3. Auto-Calculate Totals:**
+```python
+def calculate_total_room_charges(self):
+    return self.rate_per_night * self.nights
+
+def calculate_total_amount(self):
+    return (self.total_room_charges + self.taxes + self.fees +
+            self.extras - self.discounts)
+```
+
+**4. Occupancy Validation:**
+```python
+def clean(self):
+    if (self.adults + self.children) > self.room_type.max_occupancy:
+        raise ValidationError(f"Total guests exceeds max occupancy")
+```
+
+**5. NO Overlapping Reservations (CRITICAL!):**
+```python
+def clean(self):
+    if self.room_id:  # Only check if room assigned
+        overlapping = Reservation.objects.filter(
+            room=self.room,
+            status__in=['confirmed', 'checked_in']
+        ).filter(
+            check_in_date__lt=self.check_out_date,
+            check_out_date__gt=self.check_in_date
+        ).exclude(pk=self.pk)
+
+        if overlapping.exists():
+            raise ValidationError("Room has overlapping reservation")
+```
+
+**6. Generate Confirmation Number:**
+```python
+import random
+import string
+
+def generate_confirmation_number(self):
+    """Generate 10-character alphanumeric confirmation"""
+    while True:
+        code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+        if not Reservation.objects.filter(confirmation_number=code).exists():
+            return code
+```
+
+**7. Status Transitions:**
+```python
+# Valid transitions (enforce in tests):
+# pending → confirmed
+# confirmed → checked_in
+# checked_in → checked_out
+# any (except checked_out) → cancelled
+# confirmed → no_show (if past check-in date)
+```
+
+---
+
+### Override save() Method
+
+**You MUST override save() to auto-calculate fields:**
+
+```python
+def save(self, *args, **kwargs):
+    # Generate confirmation number if new
+    if not self.confirmation_number:
+        self.confirmation_number = self.generate_confirmation_number()
+
+    # Auto-calculate nights
+    self.nights = (self.check_out_date - self.check_in_date).days
+
+    # Auto-calculate totals
+    self.total_room_charges = self.rate_per_night * Decimal(str(self.nights))
+    self.total_amount = (
+        self.total_room_charges + self.taxes + self.fees +
+        self.extras - self.discounts
+    )
+
+    # Call clean() for validations
+    self.clean()
+
+    super().save(*args, **kwargs)
+```
+
+---
+
+### Required Tests (Minimum 15)
+
+**Date/Calculation Tests:**
+1. ✅ Nights auto-calculated correctly
+2. ✅ Total room charges calculated (rate × nights)
+3. ✅ Total amount calculated with taxes/fees/discounts
+4. ✅ Check-out must be after check-in (ValidationError)
+
+**Occupancy Tests:**
+5. ✅ Adults + children cannot exceed max_occupancy
+6. ✅ Validation fails if too many guests
+
+**Overlapping Reservation Tests (CRITICAL!):**
+7. ✅ Cannot create overlapping reservation (same room, overlapping dates)
+8. ✅ Can create non-overlapping reservation (same room, different dates)
+9. ✅ Can create overlapping for DIFFERENT rooms (no conflict)
+
+**Confirmation Number:**
+10. ✅ Auto-generated if not provided
+11. ✅ Confirmation number is unique
+
+**Status Tests:**
+12. ✅ Can transition pending → confirmed
+13. ✅ Can transition confirmed → checked_in
+14. ✅ Can transition checked_in → checked_out
+15. ✅ Can cancel from any status (except checked_out)
+
+**Foreign Key Tests:**
+16. ✅ Guest deletion blocked (PROTECT)
+17. ✅ Room deletion sets null (SET_NULL)
+
+---
+
+### Django Admin Configuration
+
+```python
+@admin.register(Reservation)
+class ReservationAdmin(admin.ModelAdmin):
+    list_display = ['confirmation_number', 'guest', 'hotel', 'check_in_date',
+                    'check_out_date', 'status', 'total_amount']
+    list_filter = ['status', 'source', 'hotel']
+    search_fields = ['confirmation_number', 'guest__email', 'guest__first_name']
+    readonly_fields = ['confirmation_number', 'nights', 'total_room_charges',
+                       'total_amount', 'booked_at']
+
+    fieldsets = (
+        ('Reservation Details', {
+            'fields': ('confirmation_number', 'hotel', 'guest', 'room_type', 'room', 'status')
+        }),
+        ('Dates', {
+            'fields': ('check_in_date', 'check_out_date', 'nights')
+        }),
+        ('Guests', {
+            'fields': ('adults', 'children')
+        }),
+        ('Financial', {
+            'fields': ('rate_per_night', 'total_room_charges', 'taxes', 'fees',
+                      'extras', 'discounts', 'total_amount', 'deposit_paid')
+        }),
+        ('Source', {
+            'fields': ('source', 'channel')
+        }),
+        ('Notes', {
+            'fields': ('special_requests', 'notes')
+        }),
+        ('Timestamps', {
+            'fields': ('booked_at', 'checked_in_at', 'checked_out_at',
+                      'cancelled_at', 'cancellation_reason')
+        }),
+    )
+```
+
+---
+
+### Factory
+
+```python
+class ReservationFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Reservation
+
+    hotel = factory.SubFactory(HotelFactory)
+    guest = factory.SubFactory(GuestFactory)
+    room_type = factory.SubFactory(RoomTypeFactory, hotel=factory.SelfAttribute('..hotel'))
+    room = None  # Initially unassigned
+    check_in_date = factory.Faker('future_date', end_date='+30d')
+    check_out_date = factory.LazyAttribute(
+        lambda o: o.check_in_date + timedelta(days=random.randint(1, 7))
+    )
+    adults = 2
+    children = 0
+    status = 'confirmed'
+    source = 'direct'
+    rate_per_night = Decimal('199.00')
+    taxes = Decimal('25.00')
+```
+
+---
+
+### App Structure
+
+Create **new Django app**: `apps/reservations/`
+
+```bash
+python manage.py startapp reservations apps/reservations
+```
+
+**Files to create:**
+- `apps/reservations/models.py` - Reservation model
+- `apps/reservations/tests/test_models.py` - 15+ tests
+- `apps/reservations/tests/factories.py` - ReservationFactory
+- `apps/reservations/admin.py` - Admin config
+- Migrations
+
+---
+
+### Import Considerations
+
+```python
+# At top of apps/reservations/models.py
+from decimal import Decimal
+from datetime import timedelta
+import random
+import string
+from django.core.exceptions import ValidationError
+```
+
+---
+
+### Estimated Breakdown
+
+- Model definition: 30 min
+- save() override + helpers: 20 min
+- Validation logic: 30 min
+- Tests (15+): 40 min
+- Admin + Factory: 20 min
+- **Total: ~2 hours**
+
+---
+
+### After Completion
+
+Update DEVELOPER_CONTEXT.json with:
+- Phase 4 complete
+- Total tests: 70+ (55 existing + 15 new)
+- Reservation model with all calculations working
+- Next: Phase 5 (Serializers)
+
+---
+
+**This is the HARDEST model in F-001. Take your time, test thoroughly.**
+
+**Questions? Ask before implementing if anything is unclear!**
+
+**Architect Approval**: ✅ Ready to start Phase 4
+
+---
+
 ### [DEVELOPER] 2025-10-23 00:55 - ✅ CRITICAL TASK COMPLETE + Ready for Phase 4
 
-**Status**: ✅ DEVELOPER_CONTEXT.json created and committed (8a21853)
+**Status**: ✅ APPROVED (see Phase 4 guidance above)
 
 **Context File Created**:
 - ✅ Phase 3 completion documented (55 tests passing)
