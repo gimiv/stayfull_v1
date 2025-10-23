@@ -8,7 +8,7 @@
     "vision": "21 AI features, 10-minute setup, 98% automation, zero integration"
   },
   "decisions": {
-    "framework": "Django 5.x + Django REST Framework",
+    "backend_framework": "Django 5.x + Django REST Framework",
     "language": "Python 3.11+",
     "database": "Supabase PostgreSQL",
     "auth": "Django AllAuth + JWT",
@@ -19,8 +19,13 @@
     "queue": "Celery + Redis",
     "testing": "pytest + pytest-django",
     "admin": "Django Admin",
+    "frontend": "Next.js 14+ with dual design system",
+    "ui_b2b": "Stripe-inspired (staff dashboard)",
+    "ui_b2c": "Airbnb-inspired (booking engine)",
+    "styling": "Tailwind CSS + Radix UI",
     "decided_date": "2025-10-22",
-    "revised_date": "2025-10-22 (switched from Next.js to Django for hotel PMS requirements)"
+    "revised_date": "2025-10-22 (switched from Next.js to Django for hotel PMS requirements)",
+    "design_system_date": "2025-10-23 (hybrid Stripe + Airbnb approach)"
   },
   "features": {
     "total_count": 21,
@@ -59,11 +64,11 @@
     ]
   },
   "context": {
-    "last_file": ".architect/handoffs/ARCHITECT_TO_DEVELOPER_HANDOFF.md",
-    "last_line": null,
-    "last_task": "Developer protocol established, ready for F-001 implementation",
+    "last_file": ".architect/ARCHITECT_DEVELOPER_COMMS.md",
+    "last_line": 758,
+    "last_task": "Provided Phase 6 guidance (ViewSets & API Endpoints)",
     "last_error": null,
-    "last_success": "Created developer mode protocol and handoff system",
+    "last_success": "Phase 6 guidance complete: 6 ViewSets, URL config, 32 tests, multi-tenancy, custom actions",
     "completed_today": [
       "Finalized Django + AI-first tech stack",
       "Documented 22 AI features with priorities",
@@ -76,7 +81,12 @@
       "Created DEVELOPER_INTERFACE.md (developer role and protocols)",
       "Created DEVELOPER_CONTEXT.json (implementation progress tracker)",
       "Updated architect_commands.py with developer mode support",
-      "Created ARCHITECT_TO_DEVELOPER_HANDOFF.md"
+      "Created ARCHITECT_TO_DEVELOPER_HANDOFF.md",
+      "Established file organization guidelines (FILE_ORGANIZATION.md)",
+      "Cleaned up root directory structure",
+      "Created architect-developer communication protocol",
+      "Reviewed Phase 2 completion: 34/34 tests, 98% coverage",
+      "Provided Phase 3 instructions (Guest & Staff models)"
     ],
     "session_started": "2025-10-22T19:03:00",
     "tokens_used_estimate": 112000

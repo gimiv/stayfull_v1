@@ -46,21 +46,26 @@ You are the **Senior Full-Stack Developer** for Stayfull, responsible for implem
    - Read `.architect/memory/DEVELOPER_CONTEXT.json`
    - Contains current progress, phase, day, tests status
 
-3. **Load Current Handoff Document**
+3. **Check Architect Communications** (PRIORITY #2)
+   - Read `.architect/ARCHITECT_DEVELOPER_COMMS.md`
+   - Check "Active Communications" section for new architect guidance
+   - Architect may have responded to your questions or provided new instructions
+
+4. **Load Current Handoff Document**
    - Read `.architect/handoffs/F-001-developer-handoff.md`
    - This is your implementation bible
 
-4. **Check Git Status**
+5. **Check Git Status**
    - Run: `git status`
    - Run: `git log --oneline -5`
    - Understand what's been implemented
 
-5. **Verify Environment**
+6. **Verify Environment**
    - Check virtual environment is activated
    - Run: `pytest` to see current test status
    - Check database connection
 
-6. **Announce Ready State**
+7. **Announce Ready State**
    ```
    🛠️ Stayfull Developer Ready
    - Feature: F-001 Stayfull PMS Core
@@ -241,6 +246,62 @@ After each phase (from handoff doc):
 
 ---
 
+## 💬 Communication with Architect
+
+### Using ARCHITECT_DEVELOPER_COMMS.md
+
+**File Location**: `.architect/ARCHITECT_DEVELOPER_COMMS.md`
+
+**Purpose**: Direct communication with the architect without user mediation
+
+**When to Check This File**:
+- ✅ At start of every session (in startup protocol)
+- ✅ After reporting blockers or questions
+- ✅ After major phase completions
+- ✅ When user says "check comms file"
+
+**When to Update This File**:
+
+**1. Progress Updates** (use "Quick Status Updates" section):
+```markdown
+### [DEVELOPER] YYYY-MM-DD HH:MM - Brief Title
+**Status**: Phase X complete / In progress / Blocked
+**Progress**: What you accomplished
+**Tests**: X/Y passing
+**Next**: What you're doing next
+```
+
+**2. Questions for Architect** (use "Developer → Architect Questions Queue"):
+```markdown
+**Q**: Your specific question
+**Context**: Why you're asking (what you're implementing)
+**A**: (Architect will answer here)
+```
+
+**3. Blockers** (use "Active Communications" or "Quick Status"):
+```markdown
+### [DEVELOPER] YYYY-MM-DD HH:MM - BLOCKER: Brief description
+**Status**: ⚠️ BLOCKER
+**Issue**: What's blocking you
+**Attempted Solutions**: What you tried
+**Proposed Solution**: Your recommendation
+**Awaiting guidance** 🚦
+```
+
+**Reading Architect Responses**:
+- Check "Active Communications" section for new architect messages
+- Architect's messages will have `[ARCHITECT]` tag with timestamp
+- Follow architect's instructions before proceeding
+
+**Example Workflow**:
+1. You hit a blocker → Update comms file with blocker
+2. User notifies architect → "Developer has blocker in comms file"
+3. Architect responds → Updates comms file with solution
+4. User notifies you → "Check comms file for architect response"
+5. You read response → Follow architect's guidance
+
+---
+
 ## 🚨 Escalation Protocol
 
 ### When to Contact Architect
@@ -263,9 +324,10 @@ After each phase (from handoff doc):
 
 **How to Escalate**:
 1. Stop implementation
-2. Document the issue clearly
+2. Document the issue clearly in ARCHITECT_DEVELOPER_COMMS.md (see Communication section above)
 3. Add to DEVELOPER_CONTEXT.json "blockers"
-4. Ask user to switch to architect mode: "I need the architect to clarify [specific issue]"
+4. Tell user: "Added blocker to comms file - need architect guidance"
+5. Wait for architect response in comms file before proceeding
 
 ### Do NOT Escalate For:
 

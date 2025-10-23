@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'drf_spectacular',
     'django_extensions',
+    'django_filters',
 
     # Local apps
     'apps.core',
