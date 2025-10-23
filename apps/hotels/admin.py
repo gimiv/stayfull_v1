@@ -3,12 +3,56 @@ Django Admin configuration for Hotels app models
 """
 
 from django.contrib import admin
+from django import forms
+from django_better_admin_arrayfield.admin.mixins import DynamicArrayMixin
+import pytz
 from .models import Hotel, RoomType, Room
 
 
+class HotelAdminForm(forms.ModelForm):
+    """Custom form for Hotel with timezone and currency dropdowns"""
+
+    timezone = forms.ChoiceField(
+        choices=[(tz, tz.replace('_', ' ')) for tz in pytz.common_timezones],
+        help_text="Select the hotel's timezone"
+    )
+
+    currency = forms.ChoiceField(
+        choices=[
+            ('USD', 'USD - US Dollar'),
+            ('EUR', 'EUR - Euro'),
+            ('GBP', 'GBP - British Pound'),
+            ('CAD', 'CAD - Canadian Dollar'),
+            ('AUD', 'AUD - Australian Dollar'),
+            ('JPY', 'JPY - Japanese Yen'),
+            ('CNY', 'CNY - Chinese Yuan'),
+            ('INR', 'INR - Indian Rupee'),
+            ('MXN', 'MXN - Mexican Peso'),
+            ('BRL', 'BRL - Brazilian Real'),
+            ('CHF', 'CHF - Swiss Franc'),
+            ('SGD', 'SGD - Singapore Dollar'),
+            ('HKD', 'HKD - Hong Kong Dollar'),
+            ('NZD', 'NZD - New Zealand Dollar'),
+            ('SEK', 'SEK - Swedish Krona'),
+            ('NOK', 'NOK - Norwegian Krone'),
+            ('DKK', 'DKK - Danish Krone'),
+            ('ZAR', 'ZAR - South African Rand'),
+            ('AED', 'AED - UAE Dirham'),
+            ('THB', 'THB - Thai Baht'),
+        ],
+        help_text="Select the hotel's currency"
+    )
+
+    class Meta:
+        model = Hotel
+        fields = '__all__'
+
+
 @admin.register(Hotel)
-class HotelAdmin(admin.ModelAdmin):
+class HotelAdmin(DynamicArrayMixin, admin.ModelAdmin):
     """Admin interface for Hotel model"""
+
+    form = HotelAdminForm
 
     list_display = ["name", "slug", "type", "brand", "total_rooms", "is_active", "created_at"]
     list_filter = ["type", "is_active", "created_at", "updated_at"]
@@ -28,7 +72,7 @@ class HotelAdmin(admin.ModelAdmin):
 
 
 @admin.register(RoomType)
-class RoomTypeAdmin(admin.ModelAdmin):
+class RoomTypeAdmin(DynamicArrayMixin, admin.ModelAdmin):
     """Admin interface for RoomType model"""
 
     list_display = [
