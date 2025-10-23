@@ -21,7 +21,7 @@ class GuestFactory(DjangoModelFactory):
     first_name = factory.Faker('first_name')
     last_name = factory.Faker('last_name')
     email = factory.Sequence(lambda n: f'guest{n}@example.com')
-    phone = factory.Faker('phone_number')
+    phone = factory.Sequence(lambda n: f'+1-555-{n:04d}')  # Format: +1-555-0001 (max 20 chars)
 
     # Date of birth: 25-65 years old (all adults)
     date_of_birth = factory.LazyFunction(
