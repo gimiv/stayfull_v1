@@ -174,3 +174,27 @@ class RoomAdmin(admin.ModelAdmin):
     )
 
     ordering = ["hotel", "room_number"]
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """Filter room_type to only show types from the selected hotel"""
+        if db_field.name == "room_type":
+            # Get hotel from the request (when editing or if posted)
+            hotel_id = request.GET.get('hotel') or request.POST.get('hotel')
+
+            # Or get from the instance being edited
+            if hasattr(self, 'obj') and self.obj and self.obj.hotel_id:
+                hotel_id = self.obj.hotel_id
+
+            if hotel_id:
+                kwargs["queryset"] = RoomType.objects.filter(hotel_id=hotel_id, is_active=True)
+            else:
+                # No hotel selected yet, show empty queryset with helpful message
+                kwargs["queryset"] = RoomType.objects.none()
+                kwargs["help_text"] = "Please select a hotel first, then save and continue editing to choose a room type."
+
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def get_form(self, request, obj=None, **kwargs):
+        """Store the object instance for use in formfield_for_foreignkey"""
+        self.obj = obj
+        return super().get_form(request, obj, **kwargs)

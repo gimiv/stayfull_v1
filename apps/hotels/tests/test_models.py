@@ -891,3 +891,84 @@ class TestRoomModel:
         )
 
         assert str(room) == "Room A-102 (String Room Hotel)"
+
+    def test_room_type_must_belong_to_same_hotel(self):
+        """Test that room_type must belong to the same hotel as the room"""
+        # Create two separate hotels
+        hotel_a = Hotel.objects.create(
+            name="Hotel A",
+            slug="hotel-a",
+            type="independent",
+            address={
+                "street_address": "123 A St",
+                "city": "NYC",
+                "state": "NY",
+                "postal_code": "10001",
+                "country": "US",
+            },
+            contact={
+                "phone": "+1-555-1111",
+                "email": "a@hotel.com",
+                "website": "https://hotela.com",
+            },
+            timezone="America/New_York",
+            currency="USD",
+            languages=["en"],
+            check_in_time=time(15, 0),
+            check_out_time=time(11, 0),
+            total_rooms=50,
+        )
+
+        hotel_b = Hotel.objects.create(
+            name="Hotel B",
+            slug="hotel-b",
+            type="chain",
+            address={
+                "street_address": "456 B Ave",
+                "city": "LA",
+                "state": "CA",
+                "postal_code": "90001",
+                "country": "US",
+            },
+            contact={
+                "phone": "+1-555-2222",
+                "email": "b@hotel.com",
+                "website": "https://hotelb.com",
+            },
+            timezone="America/Los_Angeles",
+            currency="USD",
+            languages=["en"],
+            check_in_time=time(15, 0),
+            check_out_time=time(11, 0),
+            total_rooms=100,
+        )
+
+        # Create room type for Hotel B
+        room_type_b = RoomType.objects.create(
+            hotel=hotel_b,
+            name="Deluxe Suite",
+            code="DLX",
+            max_occupancy=4,
+            max_adults=2,
+            max_children=2,
+            base_price=200.00,
+            bed_configuration=[{"type": "king", "count": 1}],
+            amenities=["wifi", "tv"],
+        )
+
+        # Try to create room in Hotel A with room type from Hotel B
+        room = Room(
+            hotel=hotel_a,  # Hotel A
+            room_type=room_type_b,  # Room type from Hotel B - INVALID!
+            room_number="101",
+            floor=1,
+            status="available",
+            cleaning_status="clean",
+        )
+
+        # Should raise validation error
+        with pytest.raises(ValidationError) as exc_info:
+            room.full_clean()
+
+        assert "room_type" in exc_info.value.message_dict
+        assert "belongs to" in str(exc_info.value.message_dict["room_type"][0])

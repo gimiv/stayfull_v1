@@ -282,6 +282,16 @@ class Room(BaseModel):
         """Validate model fields and business rules."""
         super().clean()
 
+        # Validate room_type belongs to the same hotel
+        if self.hotel and self.room_type:
+            if self.room_type.hotel_id != self.hotel_id:
+                raise ValidationError(
+                    {
+                        "room_type": f"Room type '{self.room_type.name}' belongs to '{self.room_type.hotel.name}', "
+                        f"but this room is assigned to '{self.hotel.name}'. Please select a room type from the same hotel."
+                    }
+                )
+
         # Validate status is in choices
         valid_statuses = [choice[0] for choice in self.STATUS_CHOICES]
         if self.status and self.status not in valid_statuses:
