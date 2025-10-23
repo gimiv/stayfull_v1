@@ -18,8 +18,10 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
+from apps.core.views import root_redirect
 
 urlpatterns = [
+    path("", root_redirect, name="root"),
     path("admin/", admin.site.urls),
     # API Documentation
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
