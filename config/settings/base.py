@@ -36,8 +36,9 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'django_extensions',
 
-    # Local apps (will add as we create them)
+    # Local apps
     'apps.core',
+    'apps.hotels',
 ]
 
 MIDDLEWARE = [
