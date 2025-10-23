@@ -412,8 +412,19 @@ class TestRoomTypeModel:
                 amenities=["wifi", "tv"],
             )
 
-    def test_roomtype_max_occupancy_equals_adults_plus_children(self):
-        """Test that max_adults + max_children must equal max_occupancy"""
+    def test_roomtype_flexible_occupancy_configuration(self):
+        """
+        Test that room type allows flexible occupancy configurations.
+
+        A room with max_occupancy=3, max_adults=2, max_children=2 is VALID
+        because it allows combinations like:
+        - 2 adults + 1 child = 3 ✓
+        - 1 adult + 2 children = 3 ✓
+        - 2 adults + 0 children = 2 ✓
+
+        The actual validation of bookings (2+2=4 is invalid) happens
+        at RESERVATION time, not room type configuration time.
+        """
         hotel = Hotel.objects.create(
             name="Validation Hotel",
             slug="validation-hotel",
@@ -438,19 +449,113 @@ class TestRoomTypeModel:
             total_rooms=75,
         )
 
-        with pytest.raises(ValidationError):
+        # This configuration should be ALLOWED (flexible occupancy)
+        room_type = RoomType(
+            hotel=hotel,
+            name="Flexible Suite",
+            code="FLEX",
+            max_occupancy=3,
+            max_adults=2,
+            max_children=2,
+            base_price=299.00,
+            bed_configuration=[{"type": "king", "count": 1}],
+            amenities=["wifi", "tv"],
+        )
+
+        # This should NOT raise ValidationError
+        room_type.full_clean()  # Should pass ✅
+        room_type.save()
+
+        assert room_type.id is not None
+        assert room_type.max_occupancy == 3
+        assert room_type.max_adults == 2
+        assert room_type.max_children == 2
+
+    def test_roomtype_rejects_max_adults_exceeding_occupancy(self):
+        """Test that max_adults cannot exceed max_occupancy"""
+        hotel = Hotel.objects.create(
+            name="Adults Test Hotel",
+            slug="adults-test-hotel",
+            type="independent",
+            address={
+                "street_address": "890 St",
+                "city": "NYC",
+                "state": "NY",
+                "postal_code": "10004",
+                "country": "US",
+            },
+            contact={
+                "phone": "+1-555-0004",
+                "email": "adults@hotel.com",
+                "website": "https://adults.com",
+            },
+            timezone="America/New_York",
+            currency="USD",
+            languages=["en"],
+            check_in_time=time(15, 0),
+            check_out_time=time(11, 0),
+            total_rooms=50,
+        )
+
+        with pytest.raises(ValidationError) as exc_info:
             room_type = RoomType(
                 hotel=hotel,
-                name="Invalid Occupancy",
-                code="INV",
-                max_occupancy=4,
-                max_adults=2,
-                max_children=1,  # 2 + 1 = 3, not 4!
+                name="Invalid Adults",
+                code="INVA",
+                max_occupancy=2,  # Only 2 people total
+                max_adults=3,     # But wants 3 adults?? ❌
+                max_children=1,
                 base_price=150.00,
-                bed_configuration=[{"type": "king", "count": 1}],
+                bed_configuration=[{"type": "queen", "count": 1}],
                 amenities=["wifi"],
             )
             room_type.full_clean()
+
+        # Verify error is on max_adults field
+        assert 'max_adults' in exc_info.value.message_dict
+
+    def test_roomtype_rejects_max_children_exceeding_occupancy(self):
+        """Test that max_children cannot exceed max_occupancy"""
+        hotel = Hotel.objects.create(
+            name="Children Test Hotel",
+            slug="children-test-hotel",
+            type="independent",
+            address={
+                "street_address": "901 Ave",
+                "city": "NYC",
+                "state": "NY",
+                "postal_code": "10005",
+                "country": "US",
+            },
+            contact={
+                "phone": "+1-555-0005",
+                "email": "children@hotel.com",
+                "website": "https://children.com",
+            },
+            timezone="America/New_York",
+            currency="USD",
+            languages=["en"],
+            check_in_time=time(15, 0),
+            check_out_time=time(11, 0),
+            total_rooms=60,
+        )
+
+        with pytest.raises(ValidationError) as exc_info:
+            room_type = RoomType(
+                hotel=hotel,
+                name="Invalid Children",
+                code="INVC",
+                max_occupancy=2,
+                max_adults=1,
+                max_children=3,  # Exceeds max_occupancy ❌
+                base_price=120.00,
+                bed_configuration=[{"type": "twin", "count": 2}],
+                amenities=["wifi"],
+            )
+            room_type.full_clean()
+
+        # Verify error is on max_children field
+        assert 'max_children' in exc_info.value.message_dict
 
     def test_roomtype_base_price_must_be_positive(self):
         """Test that base_price must be greater than 0"""

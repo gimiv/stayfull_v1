@@ -2,24 +2,26 @@
   "role": "Senior Full-Stack Developer",
   "feature": {
     "id": "F-001",
-    "name": "Stayfull PMS Core",
+    "name": "Stayfull PMS Core - UAT Bug Fixes",
     "spec_file": ".architect/features/current/F-001-stayfull-pms-core.spec.md",
-    "handoff_file": ".architect/handoffs/F-001-developer-handoff.md",
-    "status": "COMPLETE",
+    "handoff_file": ".architect/handoffs/UAT_BUG_FIXES_HANDOFF.md",
+    "status": "BUG_FIXES_IN_PROGRESS",
     "started_date": "2025-10-22",
     "completed_date": "2025-10-23",
+    "uat_started": "2025-10-23",
+    "uat_bugs_found": 5,
     "target_completion": "2025-11-06"
   },
 
   "implementation_progress": {
-    "phase": "Phase 10: Final Documentation - COMPLETE",
-    "phase_number": 10,
-    "total_phases": 10,
-    "day": "2/15",
-    "percent_complete": 100,
-    "last_completed_task": "F-001 100% COMPLETE - All 10 phases finished, production-ready",
-    "current_task": "F-001 COMPLETE",
-    "next_task": "None - Ready for deployment"
+    "phase": "Phase 11: UAT Bug Fixes",
+    "phase_number": 11,
+    "total_phases": 11,
+    "day": "3/15",
+    "percent_complete": 95,
+    "last_completed_task": "UAT started - 5 issues discovered during user testing",
+    "current_task": "Fix P0: Room Type occupancy validation (too strict)",
+    "next_task": "Fix P2: ArrayField UX improvements"
   },
 
   "code_metrics": {
@@ -49,7 +51,18 @@
     "django_project_created": true
   },
 
-  "blockers": [],
+  "blockers": [
+    {
+      "id": "UAT-001",
+      "description": "Room Type occupancy validation too strict - blocks valid hotel configurations",
+      "severity": "HIGH",
+      "priority": "P0",
+      "blocking_uat": true,
+      "discovered": "2025-10-23",
+      "file": "apps/hotels/models.py",
+      "method": "RoomType.clean()"
+    }
+  ],
 
   "decisions_made": {
     "implementation_choices": [

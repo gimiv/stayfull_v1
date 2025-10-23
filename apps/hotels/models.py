@@ -108,7 +108,10 @@ class RoomType(BaseModel):
 
     Business Rules:
     - Code must be unique within a hotel
-    - max_adults + max_children must equal max_occupancy
+    - max_adults <= max_occupancy (individual limit)
+    - max_children <= max_occupancy (individual limit)
+    - Flexible occupancy: allows combinations (e.g., 2 adults + 1 child or 1 adult + 2 children)
+    - Actual booking validation (total guests <= max_occupancy) happens at reservation time
     - At least one bed must be specified
     """
 
@@ -176,16 +179,23 @@ class RoomType(BaseModel):
         """Validate model fields and business rules."""
         super().clean()
 
-        # Validate max_adults + max_children = max_occupancy
-        if (
-            self.max_adults is not None
-            and self.max_children is not None
-            and self.max_occupancy is not None
-        ):
-            if self.max_adults + self.max_children != self.max_occupancy:
+        # Validate occupancy limits (flexible combinations allowed)
+        # Example: max_occupancy=3, max_adults=2, max_children=2 is VALID
+        # because it allows: 2+1, 1+2, 2+0, 0+2 (all ≤ 3 people)
+        # The actual booking validation (2+2=4 rejected) happens at reservation time
+        if self.max_adults is not None and self.max_occupancy is not None:
+            if self.max_adults > self.max_occupancy:
                 raise ValidationError(
                     {
-                        "max_occupancy": f"max_adults ({self.max_adults}) + max_children ({self.max_children}) must equal max_occupancy ({self.max_occupancy})."
+                        "max_adults": f"Max adults ({self.max_adults}) cannot exceed max occupancy ({self.max_occupancy})."
+                    }
+                )
+
+        if self.max_children is not None and self.max_occupancy is not None:
+            if self.max_children > self.max_occupancy:
+                raise ValidationError(
+                    {
+                        "max_children": f"Max children ({self.max_children}) cannot exceed max occupancy ({self.max_occupancy})."
                     }
                 )
 
