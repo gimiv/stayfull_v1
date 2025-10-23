@@ -11,6 +11,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from .models import Hotel, RoomType, Room
 from .serializers import HotelSerializer, RoomTypeSerializer, RoomSerializer
+from apps.core.permissions import IsOrganizationMemberOrReadOnly
 
 
 class HotelViewSet(viewsets.ModelViewSet):
@@ -21,10 +22,12 @@ class HotelViewSet(viewsets.ModelViewSet):
     - Filtering by type, active status
     - Search by name, slug
     - Ordering by name, created date
+    - Multi-tenancy: Only shows hotels from user's organization
     """
 
     queryset = Hotel.objects.all()
     serializer_class = HotelSerializer
+    permission_classes = [IsOrganizationMemberOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ["type", "is_active"]
     search_fields = ["name", "slug", "brand"]
@@ -32,12 +35,28 @@ class HotelViewSet(viewsets.ModelViewSet):
     ordering = ["name"]
 
     def get_queryset(self):
-        """
-        Optimize queryset with select_related for performance.
+        """Filter hotels by user's organization"""
+        qs = super().get_queryset()
 
-        In future: Add multi-tenancy filtering based on user's hotel access.
-        """
-        return Hotel.objects.all().order_by("name")
+        # Superusers see all
+        if self.request.user.is_superuser:
+            return qs
+
+        # Staff see only their organization's hotels
+        if hasattr(self.request.user, "staff_positions") and self.request.user.staff_positions.exists():
+            staff = self.request.user.staff_positions.first()
+            return qs.filter(organization=staff.organization)
+
+        # Others see nothing
+        return qs.none()
+
+    def perform_create(self, serializer):
+        """Auto-assign organization when creating hotel"""
+        if hasattr(self.request.user, "staff_positions") and self.request.user.staff_positions.exists():
+            staff = self.request.user.staff_positions.first()
+            serializer.save(organization=staff.organization)
+        else:
+            serializer.save()
 
     @action(detail=True, methods=["get"])
     def stats(self, request, pk=None):
@@ -72,10 +91,12 @@ class RoomTypeViewSet(viewsets.ModelViewSet):
     - Filtering by hotel, active status
     - Search by name, code
     - Ordering by name, base price
+    - Multi-tenancy: Only shows room types from user's organization
     """
 
     queryset = RoomType.objects.all()
     serializer_class = RoomTypeSerializer
+    permission_classes = [IsOrganizationMemberOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ["hotel", "is_active"]
     search_fields = ["name", "code", "description"]
@@ -83,10 +104,20 @@ class RoomTypeViewSet(viewsets.ModelViewSet):
     ordering = ["hotel", "name"]
 
     def get_queryset(self):
-        """
-        Optimize queryset with select_related for hotel.
-        """
-        return RoomType.objects.select_related("hotel").order_by("hotel", "name")
+        """Filter room types by user's organization"""
+        qs = RoomType.objects.select_related("hotel")
+
+        # Superusers see all
+        if self.request.user.is_superuser:
+            return qs
+
+        # Staff see only their organization's room types
+        if hasattr(self.request.user, "staff_positions") and self.request.user.staff_positions.exists():
+            staff = self.request.user.staff_positions.first()
+            return qs.filter(hotel__organization=staff.organization)
+
+        # Others see nothing
+        return qs.none()
 
     @action(detail=True, methods=["get"])
     def available_rooms(self, request, pk=None):
@@ -118,10 +149,12 @@ class RoomViewSet(viewsets.ModelViewSet):
     - Filtering by hotel, room type, status, floor
     - Search by room number
     - Ordering by room number, floor
+    - Multi-tenancy: Only shows rooms from user's organization
     """
 
     queryset = Room.objects.all()
     serializer_class = RoomSerializer
+    permission_classes = [IsOrganizationMemberOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ["hotel", "room_type", "status", "cleaning_status", "floor", "is_active"]
     search_fields = ["room_number"]
@@ -129,10 +162,20 @@ class RoomViewSet(viewsets.ModelViewSet):
     ordering = ["room_number"]
 
     def get_queryset(self):
-        """
-        Optimize queryset with select_related for hotel and room_type.
-        """
-        return Room.objects.select_related("hotel", "room_type").order_by("room_number")
+        """Filter rooms by user's organization"""
+        qs = Room.objects.select_related("hotel", "room_type")
+
+        # Superusers see all
+        if self.request.user.is_superuser:
+            return qs
+
+        # Staff see only their organization's rooms
+        if hasattr(self.request.user, "staff_positions") and self.request.user.staff_positions.exists():
+            staff = self.request.user.staff_positions.first()
+            return qs.filter(hotel__organization=staff.organization)
+
+        # Others see nothing
+        return qs.none()
 
     @action(detail=True, methods=["post"])
     def update_status(self, request, pk=None):

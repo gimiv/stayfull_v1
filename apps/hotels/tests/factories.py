@@ -10,6 +10,7 @@ from factory.django import DjangoModelFactory
 from faker import Faker
 
 from apps.hotels.models import Hotel, RoomType, Room
+from apps.core.tests.factories import OrganizationFactory
 
 fake = Faker()
 
@@ -20,6 +21,7 @@ class HotelFactory(DjangoModelFactory):
     class Meta:
         model = Hotel
 
+    organization = factory.SubFactory(OrganizationFactory)
     name = factory.Sequence(lambda n: f"Test Hotel {n}")
     slug = factory.LazyAttribute(lambda obj: obj.name.lower().replace(" ", "-"))
     brand = factory.Faker("company")

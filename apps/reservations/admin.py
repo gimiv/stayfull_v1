@@ -5,10 +5,11 @@ Django Admin configuration for Reservations app models
 from django.contrib import admin
 from django_better_admin_arrayfield.admin.mixins import DynamicArrayMixin
 from .models import Reservation
+from apps.core.admin import OrganizationFilteredAdmin
 
 
 @admin.register(Reservation)
-class ReservationAdmin(DynamicArrayMixin, admin.ModelAdmin):
+class ReservationAdmin(OrganizationFilteredAdmin, DynamicArrayMixin):
     """Admin interface for Reservation model"""
 
     list_display = [

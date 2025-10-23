@@ -8,6 +8,7 @@ from faker import Faker
 from datetime import date, timedelta
 
 from apps.guests.models import Guest
+from apps.core.tests.factories import OrganizationFactory
 
 fake = Faker()
 
@@ -18,6 +19,7 @@ class GuestFactory(DjangoModelFactory):
     class Meta:
         model = Guest
 
+    organization = factory.SubFactory(OrganizationFactory)
     first_name = factory.Faker("first_name")
     last_name = factory.Faker("last_name")
     email = factory.Sequence(lambda n: f"guest{n}@example.com")

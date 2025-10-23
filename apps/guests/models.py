@@ -17,7 +17,7 @@ class Guest(BaseModel):
     Represents a hotel guest.
 
     Business Rules:
-    - Email must be globally unique
+    - Email must be unique within organization (not globally)
     - id_document_number must be encrypted at rest
     - Guest must be 18+ years old for primary guest on reservation
     - Loyalty points cannot be negative
@@ -37,6 +37,16 @@ class Guest(BaseModel):
         ("platinum", "Platinum"),
     ]
 
+    # Organization relationship (REQUIRED for multi-tenancy)
+    organization = models.ForeignKey(
+        "core.Organization",
+        on_delete=models.PROTECT,
+        related_name="guests",
+        null=True,  # Temporarily nullable for migration
+        blank=True,
+        help_text="Organization this guest belongs to",
+    )
+
     # Optional link to User account
     user = models.ForeignKey(
         User,
@@ -51,7 +61,7 @@ class Guest(BaseModel):
     first_name = models.CharField(max_length=100, help_text="First name (1-100 characters)")
     last_name = models.CharField(max_length=100, help_text="Last name (1-100 characters)")
     email = models.EmailField(
-        max_length=255, unique=True, help_text="Email address (must be unique)"
+        max_length=255, help_text="Email address (unique within organization)"
     )
     phone = models.CharField(
         max_length=20, help_text="Phone number with country code (e.g., +1-555-0123)"
@@ -117,10 +127,12 @@ class Guest(BaseModel):
         ordering = ["last_name", "first_name"]
         verbose_name = "Guest"
         verbose_name_plural = "Guests"
+        # Email unique within organization (not globally)
+        unique_together = [["organization", "email"]]
         indexes = [
-            models.Index(fields=["email"]),
+            models.Index(fields=["organization", "email"]),
+            models.Index(fields=["organization", "loyalty_tier"]),
             models.Index(fields=["last_name", "first_name"]),
-            models.Index(fields=["loyalty_tier"]),
         ]
 
     @property

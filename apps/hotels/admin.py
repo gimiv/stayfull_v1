@@ -7,6 +7,7 @@ from django import forms
 from django_better_admin_arrayfield.admin.mixins import DynamicArrayMixin
 import pytz
 from .models import Hotel, RoomType, Room
+from apps.core.admin import OrganizationFilteredAdmin
 
 
 class HotelAdminForm(forms.ModelForm):
@@ -49,7 +50,7 @@ class HotelAdminForm(forms.ModelForm):
 
 
 @admin.register(Hotel)
-class HotelAdmin(DynamicArrayMixin, admin.ModelAdmin):
+class HotelAdmin(OrganizationFilteredAdmin, DynamicArrayMixin):
     """Admin interface for Hotel model"""
 
     form = HotelAdminForm
@@ -117,7 +118,7 @@ class RoomTypeAdminForm(forms.ModelForm):
 
 
 @admin.register(RoomType)
-class RoomTypeAdmin(DynamicArrayMixin, admin.ModelAdmin):
+class RoomTypeAdmin(OrganizationFilteredAdmin, DynamicArrayMixin):
     """Admin interface for RoomType model"""
 
     form = RoomTypeAdminForm
@@ -150,7 +151,7 @@ class RoomTypeAdmin(DynamicArrayMixin, admin.ModelAdmin):
 
 
 @admin.register(Room)
-class RoomAdmin(admin.ModelAdmin):
+class RoomAdmin(OrganizationFilteredAdmin):
     """Admin interface for Room model"""
 
     list_display = [

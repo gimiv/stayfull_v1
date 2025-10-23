@@ -23,7 +23,9 @@ class ReservationFactory(DjangoModelFactory):
         model = Reservation
 
     hotel = factory.SubFactory(HotelFactory)
-    guest = factory.SubFactory(GuestFactory)
+    guest = factory.SubFactory(
+        GuestFactory, organization=factory.SelfAttribute("..hotel.organization")
+    )
     room_type = factory.SubFactory(
         RoomTypeFactory, hotel=factory.SelfAttribute("..hotel")  # Same hotel as reservation
     )

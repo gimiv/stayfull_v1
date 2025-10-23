@@ -4,10 +4,11 @@ Django Admin configuration for Guests app models
 
 from django.contrib import admin
 from .models import Guest
+from apps.core.admin import OrganizationFilteredAdmin
 
 
 @admin.register(Guest)
-class GuestAdmin(admin.ModelAdmin):
+class GuestAdmin(OrganizationFilteredAdmin):
     """Admin interface for Guest model"""
 
     list_display = [

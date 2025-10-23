@@ -35,6 +35,7 @@ class StaffFactory(DjangoModelFactory):
 
     user = factory.SubFactory(UserFactory)
     hotel = factory.SubFactory(HotelFactory)
+    organization = factory.LazyAttribute(lambda obj: obj.hotel.organization if obj.hotel else None)
     role = factory.Iterator(["manager", "receptionist", "housekeeping", "maintenance"])
     department = factory.LazyAttribute(
         lambda obj: {

@@ -25,6 +25,16 @@ class Hotel(BaseModel):
         ("boutique", "Boutique"),
     ]
 
+    # Organization relationship (REQUIRED for multi-tenancy)
+    organization = models.ForeignKey(
+        "core.Organization",
+        on_delete=models.PROTECT,
+        related_name="hotels",
+        null=True,  # Temporarily nullable for migration
+        blank=True,
+        help_text="Parent organization that owns this hotel",
+    )
+
     # Basic Info
     name = models.CharField(max_length=200, help_text="Hotel name (3-200 characters)")
     slug = models.SlugField(

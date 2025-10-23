@@ -1,27 +1,27 @@
 {
   "role": "Senior Full-Stack Developer",
   "feature": {
-    "id": "F-001",
-    "name": "Stayfull PMS Core - UAT Bug Fixes",
-    "spec_file": ".architect/features/current/F-001-stayfull-pms-core.spec.md",
-    "handoff_file": ".architect/handoffs/UAT_BUG_FIXES_HANDOFF.md",
-    "status": "BUG_FIXES_IN_PROGRESS",
-    "started_date": "2025-10-22",
-    "completed_date": "2025-10-23",
-    "uat_started": "2025-10-23",
-    "uat_bugs_found": 5,
-    "target_completion": "2025-11-06"
+    "id": "F-001.1",
+    "name": "Multi-Tenancy Isolation (Organization Model)",
+    "spec_file": ".architect/features/F-001.1_MULTI_TENANCY_ISOLATION.md",
+    "handoff_file": ".architect/handoffs/F-001.1_DEVELOPER_HANDOFF.md",
+    "status": "READY_TO_START",
+    "priority": "P0 - Production Blocker",
+    "started_date": null,
+    "target_completion": "10 hours",
+    "parent_feature": "F-001",
+    "reason": "UAT discovered data isolation gap - hotels can see other hotels' data"
   },
 
   "implementation_progress": {
-    "phase": "Phase 11: UAT Bug Fixes",
-    "phase_number": 11,
-    "total_phases": 11,
-    "day": "3/15",
-    "percent_complete": 95,
-    "last_completed_task": "UAT started - 5 issues discovered during user testing",
-    "current_task": "Fix P0: Room Type occupancy validation (too strict)",
-    "next_task": "Fix P2: ArrayField UX improvements"
+    "phase": "Phase 1: Organization Model",
+    "phase_number": 1,
+    "total_phases": 5,
+    "day": "Not started",
+    "percent_complete": 0,
+    "last_completed_task": "F-001 UAT bug fixes (6/7 bugs fixed, deployed)",
+    "current_task": "START HERE: Read .architect/handoffs/F-001.1_DEVELOPER_HANDOFF.md",
+    "next_task": "Create Organization model in apps/core/models.py"
   },
 
   "code_metrics": {
@@ -51,18 +51,24 @@
     "django_project_created": true
   },
 
-  "blockers": [
-    {
-      "id": "UAT-001",
-      "description": "Room Type occupancy validation too strict - blocks valid hotel configurations",
-      "severity": "HIGH",
-      "priority": "P0",
-      "blocking_uat": true,
-      "discovered": "2025-10-23",
-      "file": "apps/hotels/models.py",
-      "method": "RoomType.clean()"
-    }
-  ],
+  "blockers": [],
+
+  "current_assignment": {
+    "task": "F-001.1: Multi-Tenancy Isolation",
+    "priority": "P0 - Production Blocker",
+    "effort": "10 hours",
+    "handoff_file": ".architect/handoffs/F-001.1_DEVELOPER_HANDOFF.md",
+    "spec_file": ".architect/features/F-001.1_MULTI_TENANCY_ISOLATION.md",
+    "instructions": [
+      "1. Read the handoff document: .architect/handoffs/F-001.1_DEVELOPER_HANDOFF.md",
+      "2. Read the full spec: .architect/features/F-001.1_MULTI_TENANCY_ISOLATION.md",
+      "3. Follow the 5-phase implementation checklist in the handoff",
+      "4. Target: 165+ tests passing, 95% coverage",
+      "5. Deploy to Railway when complete",
+      "6. Notify architect for UAT resume"
+    ],
+    "context": "UAT testing revealed architectural gap: hotels can see other hotels' data. Need Organization model as tenant boundary with row-level security in Admin and API."
+  },
 
   "decisions_made": {
     "implementation_choices": [

@@ -15,8 +15,9 @@ class Staff(BaseModel):
     Represents a hotel staff member with role-based permissions.
 
     Business Rules:
-    - User + Hotel combination must be unique (one Staff entry per user per hotel)
-    - User can have multiple Staff entries for different hotels
+    - User + Organization combination must be unique (one Staff entry per user per org)
+    - User can have multiple Staff entries for different organizations
+    - Hotel is OPTIONAL (staff can be org-level)
     - Default permissions are automatically set based on role when created
     - Permissions can be customized after creation
     """
@@ -28,9 +29,26 @@ class Staff(BaseModel):
         ("maintenance", "Maintenance"),
     ]
 
+    # Organization relationship (REQUIRED for multi-tenancy)
+    organization = models.ForeignKey(
+        "core.Organization",
+        on_delete=models.PROTECT,
+        related_name="staff",
+        null=True,  # Temporarily nullable for migration
+        blank=True,
+        help_text="Organization this staff member belongs to",
+    )
+
     # Foreign Keys
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="staff_positions")
-    hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE, related_name="staff")
+    hotel = models.ForeignKey(
+        Hotel,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="staff",
+        help_text="Specific hotel (optional, null = org-level staff)",
+    )
 
     # Role & Department
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
@@ -50,8 +68,9 @@ class Staff(BaseModel):
     class Meta:
         verbose_name = "Staff Member"
         verbose_name_plural = "Staff Members"
-        unique_together = [["user", "hotel"]]
-        ordering = ["hotel", "role", "user__last_name"]
+        # User unique within organization (not per hotel)
+        unique_together = [["organization", "user"]]
+        ordering = ["organization", "hotel", "role", "user__last_name"]
 
     def set_default_permissions_for_role(self):
         """

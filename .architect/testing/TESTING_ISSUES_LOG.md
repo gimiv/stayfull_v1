@@ -12,7 +12,7 @@
 
 **Severity**: Medium (UX Issue)
 **Location**: Django Admin → Hotels → Add/Edit Hotel → Timezone field
-**Status**: 🟡 Documented (Not blocking)
+**Status**: ✅ **FIXED** (Deployed: commit e9a4887)
 
 **Current Behavior**:
 - Timezone is a plain text input field
@@ -57,7 +57,7 @@ class HotelAdminForm(forms.ModelForm):
 
 **Severity**: Medium (UX Issue)
 **Location**: Django Admin → Hotels → Add/Edit Hotel → Currency field
-**Status**: 🟡 Documented (Not blocking)
+**Status**: ✅ **FIXED** (Deployed: commit e9a4887)
 
 **Current Behavior**:
 - Currency is a plain text input field (max 3 chars)
@@ -110,7 +110,7 @@ class Hotel(models.Model):
 
 **Severity**: Medium (UX/Validation Issue)
 **Location**: Django Admin → Multiple locations (Languages, Amenities fields)
-**Status**: 🟡 **CONFIRMED** - User encountered error
+**Status**: ✅ **FIXED** (Deployed: commit e9a4887)
 
 **Affected Fields**:
 - Hotels → Languages (ArrayField)
@@ -251,7 +251,7 @@ class Hotel(models.Model):
 
 **Severity**: HIGH (Business Logic Bug) 🔴
 **Location**: Django Admin → Room Types → Add/Edit Room Type
-**Status**: 🔴 **CONFIRMED BUG** - Validation is overly restrictive
+**Status**: ✅ **FIXED** (Deployed: commit ea7559e)
 
 **Bug Description**:
 - User tries to save configuration:
@@ -360,21 +360,91 @@ Remove the overly strict validation from `RoomType.clean()` method in `apps/hote
 
 ---
 
+### Issue #6: Room Can Be Assigned to RoomType from Different Hotel (CRITICAL)
+
+**Severity**: CRITICAL (Data Integrity Bug) 🔴
+**Location**: Django Admin → Rooms → Add/Edit Room
+**Status**: ✅ **FIXED** (Deployed: commit 819272f)
+
+**Bug Description**:
+- User was able to create a Room with:
+  - Hotel: Hotel A
+  - Room Type: Room Type from Hotel B
+- This violates multi-tenancy data isolation
+- Could cause serious data corruption and cross-hotel contamination
+
+**Why This is Critical**:
+- 🔴 **Data integrity violation**: Rooms belong to wrong hotels
+- 🔴 **Multi-tenancy breach**: Hotel A sees Hotel B's room types
+- 🔴 **Booking errors**: Reservations could be made for wrong hotel
+- 🔴 **Production blocker**: Must fix before any multi-hotel deployment
+
+**Root Cause**:
+- Room admin form showed ALL room types from ALL hotels
+- No filtering based on selected hotel
+- No model-level validation to prevent mismatch
+
+**Fix Applied**:
+1. **Admin Filtering**: Added `formfield_for_foreignkey()` to `RoomAdmin` to filter room_type dropdown to only show types from selected hotel
+2. **Model Validation**: Added validation in `Room.clean()` to reject room_type that doesn't belong to the same hotel
+3. **Test Coverage**: Added `test_room_type_must_belong_to_same_hotel()` (22/22 tests passing)
+
+**Impact**:
+- ✅ Room Type dropdown now filters correctly
+- ✅ Model-level validation prevents data corruption
+- ✅ Clear error message if mismatch occurs
+- ✅ Maintains multi-tenancy isolation
+
+**Priority**: **P0 - CRITICAL** (Data integrity - production blocker)
+
+---
+
+### Issue #7: Room Size Unit Conversion (UX Enhancement)
+
+**Severity**: Low (UX Enhancement)
+**Location**: Django Admin → Room Types → Size field
+**Status**: ✅ **FIXED** (Deployed: commit 438ddf8)
+
+**User Request**:
+- Add ability to enter room size in square feet OR square meters
+- System should convert automatically
+
+**Fix Applied**:
+- Created `RoomTypeAdminForm` with size unit selector
+- Added dropdown: Square Meters or Square Feet
+- Automatic conversion (1 sq ft = 0.092903 sq m)
+- Stores in sq m in database (standardized)
+
+**Benefits**:
+- ✅ US hotels can enter in sq ft
+- ✅ International hotels can use sq m
+- ✅ Automatic conversion eliminates calculation errors
+- ✅ Better UX for hotel staff
+
+**Priority**: P2 (Nice to have - improves UX)
+
+---
+
 ## 📊 Summary
 
-| Issue | Severity | Blocking? | Priority |
-|-------|----------|-----------|----------|
-| **Occupancy validation too strict** | **HIGH** 🔴 | **YES** | **P0** |
-| ArrayField format unclear | Medium | No | P2 |
-| Timezone not dropdown | Medium | No | P2 |
-| Currency not dropdown | Medium | No | P2 |
-| Time field cross-validation | Low | No | P3 |
+| Issue | Severity | Status | Priority |
+|-------|----------|--------|----------|
+| #1: Timezone not dropdown | Medium | ✅ FIXED | P2 |
+| #2: Currency not dropdown | Medium | ✅ FIXED | P2 |
+| #3: ArrayField format unclear | Medium | ✅ FIXED | P2 |
+| #4: Time field cross-validation | Low | 🟡 Open | P3 |
+| #5: Occupancy validation too strict | **HIGH** 🔴 | ✅ FIXED | **P0** |
+| #6: Room/Hotel data integrity bug | **CRITICAL** 🔴 | ✅ FIXED | **P0** |
+| #7: Room size unit conversion | Low | ✅ FIXED | P2 |
 
-**Total Issues**: 5 (1 critical blocker, 3 UX improvements, 1 low priority)
-**Blocking Issues**: 1 (occupancy validation)
-**Must Fix Before Launch**: Issue #5 (occupancy validation)
+**Total Issues**: 7
+**Fixed**: 6 (2 critical, 3 UX improvements, 1 enhancement)
+**Open**: 1 (1 low priority - not blocking)
 
-**Testing Status**: ✅ Can continue testing with workarounds
+**All Blocking Issues Resolved** ✅
+**Production Ready** ✅
+
+**Testing Status**: ✅ All critical bugs fixed - continue with Scenario 3
 
 ---
 

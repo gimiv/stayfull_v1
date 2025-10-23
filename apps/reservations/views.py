@@ -7,7 +7,7 @@ Provides REST API endpoints for Reservation model with custom actions.
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from apps.core.permissions import IsOrganizationMemberOrReadOnly
 from django.db import models
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
@@ -29,7 +29,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
 
     queryset = Reservation.objects.all()
     serializer_class = ReservationSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsOrganizationMemberOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ["hotel", "status", "source", "guest", "room_type"]
     search_fields = ["confirmation_number", "guest__first_name", "guest__last_name", "guest__email"]
@@ -37,25 +37,26 @@ class ReservationViewSet(viewsets.ModelViewSet):
     ordering = ["-check_in_date"]
 
     def get_queryset(self):
-        """
-        Filter reservations by hotel, status, dates, guest.
-        Multi-tenancy: Critical for hotel data isolation.
-        """
-        queryset = Reservation.objects.select_related(
-            "hotel", "guest", "room", "room_type"
-        ).order_by("-check_in_date")
+        """Filter reservations by user's organization and query params"""
+        queryset = Reservation.objects.select_related("hotel", "guest", "room", "room_type")
 
-        # Filter by hotel (CRITICAL for multi-tenancy)
+        # CRITICAL: Organization-based multi-tenancy filtering
+        if not self.request.user.is_superuser:
+            if hasattr(self.request.user, "staff_positions") and self.request.user.staff_positions.exists():
+                staff = self.request.user.staff_positions.first()
+                queryset = queryset.filter(hotel__organization=staff.organization)
+            else:
+                return queryset.none()
+
+        # Additional query param filters
         hotel_id = self.request.query_params.get("hotel")
         if hotel_id:
             queryset = queryset.filter(hotel_id=hotel_id)
 
-        # Filter by status
         status_filter = self.request.query_params.get("status")
         if status_filter:
             queryset = queryset.filter(status=status_filter)
 
-        # Filter by date range
         check_in_from = self.request.query_params.get("check_in_from")
         check_in_to = self.request.query_params.get("check_in_to")
         if check_in_from:
@@ -63,12 +64,11 @@ class ReservationViewSet(viewsets.ModelViewSet):
         if check_in_to:
             queryset = queryset.filter(check_in_date__lte=check_in_to)
 
-        # Filter by guest
         guest_id = self.request.query_params.get("guest")
         if guest_id:
             queryset = queryset.filter(guest_id=guest_id)
 
-        return queryset
+        return queryset.order_by("-check_in_date")
 
     @action(detail=False, methods=["post"])
     def check_availability(self, request):

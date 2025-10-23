@@ -4,10 +4,11 @@ Django Admin configuration for Staff app models
 
 from django.contrib import admin
 from .models import Staff
+from apps.core.admin import OrganizationFilteredAdmin
 
 
 @admin.register(Staff)
-class StaffAdmin(admin.ModelAdmin):
+class StaffAdmin(OrganizationFilteredAdmin):
     """Admin interface for Staff model"""
 
     list_display = [

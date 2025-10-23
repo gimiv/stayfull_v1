@@ -28,9 +28,9 @@
     "design_system_date": "2025-10-23 (hybrid Stripe + Airbnb approach)"
   },
   "features": {
-    "total_count": 21,
-    "completed": ["F-001: Stayfull PMS Core (100% COMPLETE - Production Ready)"],
-    "in_progress": [],
+    "total_count": 22,
+    "completed": [],
+    "in_progress": ["F-001: Stayfull PMS Core (95% - UAT paused)", "F-001.1: Multi-Tenancy Isolation (Spec complete, ready for dev)"],
     "priority_1_foundation": [
       "F-001: Stayfull PMS (Core)",
       "F-002: AI Onboarding Agent (10-min setup)",
@@ -134,15 +134,18 @@
     "cache_strategy": "Redis (embedding similarity)"
   },
   "metrics": {
-    "files_created": 71,
-    "tests_written": 151,
-    "tests_passing": 151,
-    "features_complete": 1,
-    "features_deployed": 1,
+    "files_created": 73,
+    "tests_written": 152,
+    "tests_passing": 152,
+    "features_complete": 0,
+    "features_in_progress": 2,
+    "features_deployed": 0,
     "deployment_quality_score": 95,
     "ai_features_complete": 0,
-    "bugs_fixed": 0,
-    "debt_items": 0,
+    "bugs_discovered_uat": 7,
+    "bugs_fixed": 6,
+    "critical_bugs_fixed": 2,
+    "debt_items": 1,
     "onboarding_time_minutes": null,
     "ai_accuracy_percent": null,
     "ai_monthly_cost_per_hotel": null
