@@ -17,6 +17,8 @@ urlpatterns = [
     # API endpoints - Text
     path("api/message/", views.send_message, name="send_message"),
     path("api/start-onboarding/", views.start_onboarding, name="start_onboarding"),
+    path("api/process-hotel-search/", views.process_hotel_search, name="process_hotel_search"),
+    path("api/accept-hotel-details/", views.accept_hotel_details, name="accept_hotel_details"),
 
     # API endpoints - Voice
     path("api/voice/transcribe/", views.transcribe_audio, name="transcribe_audio"),
@@ -35,6 +37,7 @@ urlpatterns = [
     # API endpoints - Progress Tracker (Phase 4.5)
     path("api/progress/", views.get_progress, name="get_progress"),
     path("api/accept-field/", views.accept_field, name="accept_field"),
+    path("api/update-field/", views.update_field, name="update_field"),
 
     # API endpoints - Integration & Polish (Phase 6)
     path("api/complete-onboarding/", views.complete_onboarding, name="complete_onboarding"),

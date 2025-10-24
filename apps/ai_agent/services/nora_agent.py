@@ -11,6 +11,7 @@ from .conversation_engine import OnboardingEngine, OnboardingState
 from .intent_detector import IntentDetector, Intent
 from .data_extractor import DataExtractor
 from .content_formatter import ContentFormatter
+from .google_places_service import GooglePlacesService
 
 
 class NoraAgent:
@@ -39,6 +40,7 @@ class NoraAgent:
         self.intent_detector = IntentDetector()
         self.data_extractor = DataExtractor()
         self.content_formatter = ContentFormatter()
+        self.google_places = GooglePlacesService()
 
     def process_message(self, user_message: str) -> Dict:
         """
@@ -273,19 +275,70 @@ class NoraAgent:
 
         # Success! Save extracted data to task_state
         for key, value in extracted_data.items():
-            if value and key != "error":
+            if value and key != "error" and key != "confidence":
                 engine.update_field(key, value)
+
+        # Enrich with Google Places (GPS, timezone, photos)
+        hotel_name = extracted_data.get("hotel_name")
+        city = extracted_data.get("city")
+        state = extracted_data.get("state")
+
+        if hotel_name and city and self.google_places.client:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f"Enriching {hotel_name}, {city} with Google Places data...")
+
+            places_data = self.google_places.search_hotel(hotel_name, city, state)
+
+            if places_data:
+                # Add GPS coordinates and timezone
+                location = places_data.get("location", {})
+                if location.get("lat") and location.get("lng"):
+                    engine.update_field("latitude", location["lat"])
+                    engine.update_field("longitude", location["lng"])
+
+                    # Get timezone from coordinates
+                    timezone = self.google_places.infer_timezone_from_location(
+                        location["lat"], location["lng"]
+                    )
+                    engine.update_field("timezone", timezone)
+
+                # Store Google Place ID and verified phone
+                if places_data.get("place_id"):
+                    engine.update_field("google_place_id", places_data["place_id"])
+
+                if places_data.get("phone") and not extracted_data.get("phone"):
+                    engine.update_field("phone", places_data["phone"])
+
+                logger.info(f"Google Places enrichment successful: GPS={location}, timezone={timezone}")
+
+        # Apply smart defaults (currency, tax rate)
+        country = extracted_data.get("country")
+        if country:
+            defaults = self.data_extractor.infer_smart_defaults(
+                country=country,
+                state=state,
+                city=city
+            )
+            for key, value in defaults.items():
+                if value:
+                    engine.update_field(key, value)
 
         self.context.update_task_state(self.context.task_state)
 
         # Generate confirmation message
         confidence_pct = int(extracted_data.get("confidence", 0) * 100)
-        message = f"Perfect! I found your hotel: {extracted_data.get('hotel_name', 'your hotel')} in {extracted_data.get('city', '')}. "
+        message = f"Perfect! I pulled everything from {url}:\n\n"
+        message += f"✅ {hotel_name or 'Your hotel'}"
 
-        if confidence_pct > 80:
-            message += "Great! Let me confirm a few details, then we'll move to room types."
-        else:
-            message += "I got some info, but let's double-check a few things."
+        if city:
+            message += f" in {city}"
+        if extracted_data.get("amenities"):
+            message += f"\n✅ {len(extracted_data['amenities'])} amenities found"
+        if extracted_data.get("room_types"):
+            message += f"\n✅ {len(extracted_data['room_types'])} room types found"
+
+        message += "\n\nDoes this look right?"
 
         self.context.add_message(role="assistant", content=message)
 

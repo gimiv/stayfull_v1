@@ -1,887 +1,1523 @@
-# F-002: AI Onboarding Agent (10-Minute Hotel Setup)
+# F-002: Nora AI Onboarding Agent (Revised)
 
-**Feature ID**: F-002
-**Priority**: P1 - Foundation (Killer Feature)
-**Type**: AI-Powered User Experience
-**Status**: Approved - Ready for Development
-**Effort**: 42 hours (~1 week)
-**Created**: 2025-10-23
-**Decision**: #009
-
----
-
-## 🎯 Executive Summary
-
-**The Problem**:
-- Traditional PMS onboarding takes 60-90 minutes
-- Complex forms, unclear fields, high abandonment
-- Requires technical knowledge
-- Support-intensive
-
-**The Solution**:
-- AI-powered conversational onboarding
-- Natural language Q&A (guided questions)
-- Hotel operational in **10 minutes**
-- Zero technical knowledge required
-
-**The Impact**:
-- 10x faster than competitors
-- 90%+ completion rate (vs 40% industry standard)
-- Minimal support burden
-- Primary competitive differentiation
-- Viral "wow moment" for marketing
+**Status**: Spec Complete - Ready for User Review
+**Priority**: P1 - Killer Feature
+**Effort**: TBD (after review)
+**Dependencies**: F-001.1 (Organization model)
+**Created**: 2025-10-23 (Original)
+**Revised**: 2025-10-23 (Complete Rewrite After Discovery)
 
 ---
 
-## 📋 Business Requirements
+## 🔄 What Changed from Original Spec
 
-### Target User Journey (10-12 Minutes):
+**Original Understanding** (Built in isolation):
+- ❌ Just an onboarding feature
+- ❌ Included website builder/templates (that's F-003)
+- ❌ Session-based, one-time use
+- ❌ Missed data acceleration opportunities
+- ❌ No concept of editable vs. locked fields
+- ❌ Voice as "maybe later"
 
-```
-Minute 0-2: Sign Up
-├─ User creates account
-├─ System creates Organization + default staff
-└─ Redirect to AI onboarding chat
-
-Minute 2-10: AI Conversation (Guided Q&A)
-├─ State 1: Hotel Basics (2 min)
-│   └─ Name, location, contact, type, timezone
-├─ State 2: Room Types (4 min)
-│   └─ For each type: name, beds, amenities, occupancy, price
-├─ State 3: Room Inventory (1 min)
-│   └─ Auto-generate room numbers, confirm count
-├─ State 4: Policies (2 min)
-│   └─ Check-in/out times, cancellation, deposits
-└─ State 5: Review & Confirm (1 min)
-    └─ Show summary, user confirms
-
-Minute 10-11: Data Generation (30 sec)
-├─ Create Hotel record
-├─ Create RoomType records
-├─ Bulk-create Room records
-├─ Set up policies
-└─ Assign stock photos
-
-Minute 11-12: Success & Next Steps
-├─ "Your hotel is live!"
-├─ Quick tour of admin
-├─ Link to booking engine
-└─ Suggested next steps
-```
-
-### What Gets Created (Operational Hotel):
-
-**Core Records**:
-- ✅ Organization (from signup)
-- ✅ Hotel (complete with all details)
-- ✅ Staff (hotel owner account)
-- ✅ RoomTypes (all defined types with amenities, beds, pricing)
-- ✅ Rooms (all individual units, auto-numbered)
-- ✅ Policies (check-in/out, cancellation)
-
-**Auto-Generated**:
-- ✅ Stock room photos (from library or AI-generated)
-- ✅ Room numbers (101-150, 201-250, etc.)
-- ✅ Default settings (currency, timezone)
-
-**NOT Created (Can Add Later)**:
-- ❌ Custom photos (user uploads later)
-- ❌ Integrations (payment, channel manager)
-- ❌ Additional staff accounts
-- ❌ Guest records
-
-**Result**: Hotel can accept first booking immediately after onboarding.
+**New Understanding** (After collaborative discovery):
+- ✅ **Nora = System-wide AI agent** (powers all 21+ features)
+- ✅ **Persistent context** (remembers, learns, always available)
+- ✅ **Aggressive data extraction** (website scraping, Google Places, smart defaults)
+- ✅ **Opinionated UX** (user controls data, Stayfull controls presentation)
+- ✅ **Voice + text from day one**
+- ✅ **Real-time preview with edit controls**
+- ✅ **"Play Me First" intro video** (builds immediate trust)
 
 ---
 
-## 🏗️ Technical Architecture
+## Executive Summary
 
-### Component Overview:
+**What This Is**: Nora, your AI hotel operations co-worker who guides hotel owners through 10-minute onboarding and remains available for all system operations thereafter.
 
+**The Transformation**:
+- Industry standard: 6-12 months to launch
+- Stayfull with Nora: 10 minutes
+
+**The Wow Factor**:
+- User provides 10% input (basic answers)
+- AI does 90% of work (extraction, enhancement, formatting, generation)
+- Fully operational website at end of conversation
+- Professional photos, enhanced descriptions, formatted policies
+
+**The Strategy**: Intentionally polarizing. AI-first approach filters customers - those scared of AI self-select out on day one, saving both parties time.
+
+---
+
+## 1. The Problem
+
+**Traditional PMS Onboarding:**
+- 60-90 minute forms
+- Complex, unclear fields
+- 40% abandonment rate
+- High support burden
+- Requires technical skills
+- No immediate value
+- Barrier to customer acquisition
+
+**Mews Example** (User's experience):
+- 3-4 weeks calendar time (could be 1 day without waiting)
+- 20-room hotel setup
+- Language confusion ("spaces" vs "rooms")
+- Low-tech users struggled
+- Multiple staff needed
+
+---
+
+## 2. The Solution: Nora
+
+### 2.1 Core Concept
+
+**Nora = Expert-level AI co-worker, available 24/7 for ALL hotel operations**
+
+She's not a feature - she's the primary interface for the entire PMS.
+
+**Architecture Inspirations:**
+- **Airbnb's templates**: Standardized design, custom content only
+- **Shopify's commerce**: Platform is commerce-aware from ground up
+- **ChatGPT's interface**: Natural language for complex operations
+
+### 2.2 First Impression: "Play Me First"
+
+**User Journey:**
+1. User signs up → creates account
+2. Lands on welcome screen with large play button
+3. 45-second video introduces Nora
+4. Onboarding begins immediately after
+5. 10 minutes later: operational hotel website
+
+**Video Script (45 seconds):**
 ```
-┌──────────────────────────────────────────────────────────────┐
-│                    F-002 Architecture                         │
-└──────────────────────────────────────────────────────────────┘
+NORA (enthusiastic, professional):
 
-┌─────────────┐      ┌──────────────┐      ┌─────────────────┐
-│   Frontend   │─────▶│   Backend     │─────▶│   OpenAI API    │
-│  Chat UI     │◀─────│  Conversation │◀─────│   GPT-4o        │
-│  (HTMX)      │      │  Engine       │      │                 │
-└─────────────┘      └──────────────┘      └─────────────────┘
-                            │
-                            ▼
-                     ┌──────────────┐
-                     │    Redis     │
-                     │  (Session)   │
-                     └──────────────┘
-                            │
-                            ▼
-                     ┌──────────────┐
-                     │  PostgreSQL  │
-                     │  (F-001 DB)  │
-                     └──────────────┘
+"Hi! I'm Nora, your AI co-worker here at Stayfull.
+
+Think of me as your expert-level teammate who knows
+everything about hotel operations - from setting up
+your property to managing daily bookings and beyond.
+
+Here's what makes me different: You can talk to me
+just like you'd talk to a co-worker. Need to create
+a booking? Just ask. Want to check tomorrow's arrivals?
+I've got it. Curious about your revenue this month?
+I'll pull that up for you.
+
+I work through text OR voice - whatever feels natural
+to you.
+
+Right now, let's get your hotel set up together.
+It'll take about 10 minutes, and I'll guide you
+through every step.
+
+And remember: I'm always here. Anytime you need help,
+just click my icon and ask. I can do pretty much
+anything in the system for you.
+
+Ready? Let's build your hotel!"
+
+[Button appears: "Let's Go, Nora!" 🚀]
+```
+
+**Technical Specs:**
+- **Voice**: ElevenLabs OR OpenAI Realtime (configurable, swappable)
+- **Avatar**: Static illustration (professional, friendly)
+- **Video**: MP4, max 5MB, plays once on first login
+- **Can replay**: Available in settings
+- **Skippable**: User can skip to setup
+
+**Voice Persona:**
+- **Default Tone**: Enthusiastic (but professional)
+- **Customizable in Settings**:
+  - Option 1: Enthusiastic (default)
+  - Option 2: Professional & Calm
+  - Option 3: Casual & Friendly
+- **Voice Type**: Female, clear articulation
+- **Speaking Pace**: 150-160 WPM (conversational)
+- **Language**: English only (MVP)
+
+---
+
+## 3. Onboarding Architecture
+
+### 3.1 UX Layout
+
+**Desktop (Split Screen - 50/50):**
+```
+┌──────────────────────────────────────────────────────────┐
+│ Progress: [████████░░░░░░░] 60% - Room Types           │
+├────────────────────────┬─────────────────────────────────┤
+│                        │                                 │
+│  NORA (Left 50%)       │  LIVE PREVIEW (Right 50%)      │
+│                        │                                 │
+│  [Chat messages]       │  [Guest-facing website]        │
+│  [Voice 🎤 / Text ⌨️]  │  [Updates in real-time]        │
+│                        │  [Edit buttons on hover]       │
+│                        │                                 │
+└────────────────────────┴─────────────────────────────────┘
+```
+
+**Mobile (Tab/Toggle):**
+```
+┌─────────────────────────┐
+│  [Chat] | [Preview]     │ ← Toggle tabs
+├─────────────────────────┤
+│                         │
+│  Active tab full screen │
+│                         │
+│  (Chat OR Preview)      │
+│                         │
+├─────────────────────────┤
+│  Tab switcher at bottom │
+└─────────────────────────┘
+```
+
+### 3.2 The "10% Input, 90% AI" Principle
+
+**Priority Order for Data Collection:**
+
+1. **Website scraping** (if user has website)
+   - Extracts: Name, address, contact, room types, pricing, photos, policies
+   - Time saved: ~8 minutes
+
+2. **Google Places API** (validate/enhance data)
+   - Gets: Verified address, phone, high-res photos, timezone
+   - Time saved: ~3 minutes
+
+3. **OTA import** (if listed on Booking.com/Expedia)
+   - Imports: Professional room descriptions, policies, photos
+   - Time saved: ~5 minutes
+
+4. **Smart defaults** (infer from location)
+   - Sets: Currency, tax rates, check-in/out times, typical pricing
+   - Time saved: ~2 minutes
+
+5. **CSV upload** (if they have spreadsheet)
+   - Imports: Room types, inventory, pricing
+   - Time saved: ~4 minutes
+
+6. **Manual Q&A** (only for missing data)
+   - Guided questions one at a time
+   - Nora asks minimum required questions
+
+**Example Acceleration:**
+```
+NORA: What's your hotel website?
+USER: sunsetvilla.com
+NORA: 🔍 Scanning website... [8 seconds]
+      🔍 Cross-referencing Google Places...
+      🔍 Analyzing similar hotels in Miami...
+
+      🎉 Found everything! Extracted:
+      ✅ Sunset Villa, Miami, FL
+      ✅ Contact info
+      ✅ 3 room types with pricing
+      ✅ 12 photos
+      ✅ Policies
+
+      That saved us 8 minutes! Let me show you...
+      [Shows live preview with all data]
+
+      Just need to confirm a few things:
+      1. How many rooms do you have total?
 ```
 
 ---
 
-## 🎨 Frontend: Chat Interface
+## 4. Core Principle: Editable Data vs. Locked Presentation
 
-### Location:
-**Django Template** (not separate Next.js app for MVP)
-- Path: `/onboarding/` (after signup)
-- Template: `apps/onboarding/templates/onboarding/chat.html`
-- Tech: Django + HTMX for real-time chat updates
+### 4.1 The Philosophy
 
-### UI Components:
+**"Protect hotel operators from bad UX while enforcing their business rules as defined."**
 
-```html
-<!-- Simple, clean chat interface -->
-<div class="chat-container">
-  <!-- Progress bar -->
-  <div class="progress-bar">
-    <div class="progress" style="width: 40%"></div>
-    <span>Step 2 of 5: Room Types</span>
-  </div>
+Hotel owners are terrible marketers. If we let them write free-form policy text, they'll hurt their own conversion rates. Instead:
 
-  <!-- Chat messages -->
-  <div class="messages" id="chat-messages">
-    <div class="message ai">
-      <div class="avatar">🤖</div>
-      <div class="text">What's your hotel called?</div>
-    </div>
+- **User controls**: Business rules, data, values, content
+- **Stayfull controls**: Formatting, presentation, guest-facing UX
 
-    <div class="message user">
-      <div class="text">Seaside Resort</div>
-      <div class="avatar">👤</div>
-    </div>
-  </div>
+### 4.2 Visual Pattern
 
-  <!-- Input -->
-  <form hx-post="/onboarding/message/" hx-target="#chat-messages" hx-swap="beforeend">
-    <input type="text" name="message" placeholder="Type your answer..." autofocus>
-    <button type="submit">Send</button>
-  </form>
-</div>
+**In Live Preview (During Onboarding):**
+```
+┌─── LIVE PREVIEW ──────────────────────────────────┐
+│                                                   │
+│  💳 50% deposit at booking, rest on arrival       │
+│     ↑ User CANNOT edit this text directly         │
+│                                                   │
+│      [Edit deposit rules] ← Button appears hover │
+│         ↑ Opens structured form                   │
+└───────────────────────────────────────────────────┘
 ```
 
-**Styling**: Clean, modern, mobile-responsive (Tailwind CSS)
+**Clicking [Edit] Opens Structured Modal:**
+```
+┌─── EDIT PAYMENT POLICY ───────────────────────────┐
+│                                                   │
+│  Deposit Amount:                                  │
+│  [50] [% ▼]  or  [$] [___]                       │ ✅ Edit
+│                                                   │
+│  Deposit Due:                                     │
+│  [At booking ▼]                                   │ ✅ Edit
+│     Options: At booking, X days before arrival   │
+│                                                   │
+│  Remaining Balance Due:                           │
+│  [On arrival ▼]                                   │ ✅ Edit
+│     Options: On arrival, X days before, At booking│
+│                                                   │
+│  ─────────────────────────────────────────────    │
+│                                                   │
+│  ✨ Guest Will See:                               │
+│  ┌─────────────────────────────────────────────┐ │
+│  │ 💳 50% deposit at booking, rest on arrival  │ │ ❌ Locked
+│  └─────────────────────────────────────────────┘ │
+│     ↑ AI-generated, updates live as you edit     │
+│                                                   │
+│  [Cancel]  [Save Changes]                         │
+└───────────────────────────────────────────────────┘
+```
 
----
+**Key UX:**
+- Preview shows "Guest Will See:" text
+- Updates in real-time as user changes structured inputs
+- User CANNOT directly type/edit the guest-facing text
+- AI formats it consistently, professionally
 
-## 🧠 Backend: Conversation Engine
+### 4.3 Complete Field Control Matrix
 
-### State Machine (5 States):
+| Field | User Edits | System Locks | Edit Type | Why Locked |
+|-------|-----------|--------------|-----------|------------|
+| **Hotel Name** | Text | Font, size, placement | Text input | Internal data only |
+| **Address** | Street, city, zip | Display format | Google Places autocomplete | Internal data only |
+| **Phone/Email** | Values | Formatting, icons | Validated input | Internal data only |
+| **Check-in Time** | Time value (3pm→4pm) | "Check-in from 3:00 PM" text | Time picker | Guest UX |
+| **Check-out Time** | Time value | "Check-out by 11:00 AM" text | Time picker | Guest UX |
+| **Room Type Name** | Name text | Heading style | Text input | Internal label |
+| **Room Description (Basic)** | Short text (1-2 sentences) | AI-enhanced guest-facing version | Textarea + "Regenerate" button | Guest UX |
+| **Base Occupancy** | Number (2→3) | "Perfect for 2 guests" text | Number picker | Guest UX |
+| **Max Occupancy** | Number | "Accommodates up to 4" text | Number picker | Guest UX |
+| **Bed Configuration** | Bed type/count | "One king bed" text | Structured picker | Guest UX |
+| **Amenities** | Which included | Bullet formatting, icons, order | Checklist | Guest UX |
+| **Base Rate** | Dollar amount | "$199/night" formatting | Currency input | Guest UX |
+| **Deposit Policy** | %, $, timing | **LOCKED** guest-facing text | Structured form | **Guest UX** |
+| **Cancellation Policy** | Hours, penalty % | **LOCKED** guest-facing text | Structured form | **Guest UX** |
+| **Service Fees** | Amount | Price breakdown display | Currency input | Guest UX |
+| **Tax Rate** | Percentage | Tax display format | Percentage input | Guest UX |
+| **Photos** | Upload custom | Cropping, sizing, compression, lazy load | File upload + AI generation | Guest UX |
 
+**Golden Rule for Developers:**
 ```python
-# apps/onboarding/services/state_machine.py
-
-class OnboardingState(Enum):
-    HOTEL_BASICS = "hotel_basics"
-    ROOM_TYPES = "room_types"
-    ROOM_INVENTORY = "room_inventory"
-    POLICIES = "policies"
-    REVIEW = "review"
-    COMPLETE = "complete"
-
-
-class StateTransitions:
-    """Defines state flow and validation"""
-
-    FLOW = {
-        OnboardingState.HOTEL_BASICS: {
-            'next': OnboardingState.ROOM_TYPES,
-            'required_fields': ['name', 'address', 'contact', 'timezone', 'currency'],
-        },
-        OnboardingState.ROOM_TYPES: {
-            'next': OnboardingState.ROOM_INVENTORY,
-            'required_fields': ['room_types'],  # At least 1
-            'can_loop': True,  # User can add multiple room types
-        },
-        OnboardingState.ROOM_INVENTORY: {
-            'next': OnboardingState.POLICIES,
-            'required_fields': ['room_count_confirmed'],
-        },
-        OnboardingState.POLICIES: {
-            'next': OnboardingState.REVIEW,
-            'required_fields': ['check_in_time', 'check_out_time'],
-        },
-        OnboardingState.REVIEW: {
-            'next': OnboardingState.COMPLETE,
-            'required_fields': ['user_confirmed'],
-        },
-    }
-```
-
----
-
-### Conversation Engine (Core Logic):
-
-```python
-# apps/onboarding/services/conversation_engine.py
-
-from openai import OpenAI
-import json
-from typing import Dict, Any
-
-
-class OnboardingConversationEngine:
+def can_user_edit(field_name: str, edit_target: str) -> bool:
     """
-    AI-powered conversation engine for hotel onboarding.
-
-    Uses GPT-4o for:
-    1. Extracting structured data from user messages
-    2. Generating natural follow-up questions
-    3. Validating user inputs
+    User can edit: Business data, rules, values
+    User cannot edit: Guest-facing formatting, presentation
     """
-
-    def __init__(self, session_id: str):
-        self.session_id = session_id
-        self.state = self.load_state_from_redis()
-        self.openai = OpenAI(api_key=settings.OPENAI_API_KEY)
-
-    def process_message(self, user_message: str) -> Dict[str, Any]:
-        """
-        Process user message and return AI response.
-
-        Flow:
-        1. Get current state and context
-        2. Use GPT-4o to extract data from user message
-        3. Validate extracted data
-        4. Update session state
-        5. Generate next question
-        6. Return response
-        """
-
-        # Get current state context
-        current_state = self.state['current_step']
-        conversation_history = self.state['conversation_history']
-
-        # Build prompt for GPT-4o
-        extraction_prompt = self._build_extraction_prompt(
-            state=current_state,
-            user_message=user_message,
-            history=conversation_history
-        )
-
-        # Call GPT-4o to extract structured data
-        extracted_data = self._extract_data_with_gpt4o(extraction_prompt)
-
-        # Validate extracted data
-        is_valid, validation_errors = self._validate_data(
-            data=extracted_data,
-            state=current_state
-        )
-
-        if is_valid:
-            # Update session with extracted data
-            self._update_session(extracted_data)
-
-            # Determine if we should advance to next state
-            can_advance = self._check_state_completion(current_state)
-
-            if can_advance:
-                next_state = self._get_next_state(current_state)
-                self.state['current_step'] = next_state
-                ai_response = self._generate_question_for_state(next_state)
-            else:
-                # Stay in current state, ask next question
-                ai_response = self._generate_next_question_in_state(current_state)
-
-        else:
-            # Data invalid, ask for clarification
-            ai_response = self._generate_clarification_message(validation_errors)
-
-        # Save conversation history
-        self._save_conversation_turn(user_message, ai_response)
-
-        # Save state to Redis
-        self._save_state_to_redis()
-
-        return {
-            'message': ai_response,
-            'state': self.state['current_step'],
-            'progress': self._calculate_progress(),
-            'data_collected': self.state['data']
-        }
-
-
-    def _build_extraction_prompt(self, state: str, user_message: str, history: list) -> str:
-        """
-        Build prompt for GPT-4o to extract structured data.
-
-        Uses JSON mode for reliable extraction.
-        """
-
-        if state == OnboardingState.HOTEL_BASICS:
-            return f"""
-You are helping onboard a hotel owner. Extract structured data from their message.
-
-Current question context: We're collecting hotel basic information.
-
-User said: "{user_message}"
-
-Extract and return JSON with these fields (only include fields mentioned):
-{{
-  "name": "hotel name",
-  "address": {{
-    "street": "street address",
-    "city": "city",
-    "state": "state/province",
-    "postal_code": "zip/postal code",
-    "country": "country"
-  }},
-  "contact": {{
-    "email": "email",
-    "phone": "phone number"
-  }},
-  "timezone": "IANA timezone (e.g., America/New_York)",
-  "currency": "ISO 4217 code (e.g., USD)"
-}}
-
-If user's message doesn't contain these fields, return empty object {{}}.
-Be smart about inferring (e.g., "Miami" → city: Miami, state: FL, country: US).
-"""
-
-        elif state == OnboardingState.ROOM_TYPES:
-            return f"""
-You are helping collect room type information for a hotel.
-
-User said: "{user_message}"
-
-Extract room type details and return JSON:
-{{
-  "name": "room type name (e.g., Standard Room, Ocean Suite)",
-  "code": "short code (e.g., STD, SUI) - generate if not provided",
-  "count": "number of rooms of this type",
-  "max_occupancy": "maximum total guests",
-  "max_adults": "maximum adults",
-  "max_children": "maximum children",
-  "beds": [
-    {{"type": "bed type (king/queen/twin/sofa_bed)", "count": 1}}
-  ],
-  "amenities": ["WiFi", "TV", "Mini Fridge", etc.],
-  "base_price": "nightly rate (number)",
-  "size_sqft": "room size in square feet (number, optional)"
-}}
-
-Be smart about inferring:
-- "queen bed" → beds: [{{"type": "queen", "count": 1}}]
-- "2 queens" → beds: [{{"type": "queen", "count": 2}}]
-- "40 rooms at $150/night" → count: 40, base_price: 150
-
-If not provided, use smart defaults:
-- max_occupancy: 2 for standard, 4 for suites
-- max_adults: same as max_occupancy
-- max_children: half of max_occupancy
-"""
-
-        # Add similar prompts for other states...
-
-
-    def _extract_data_with_gpt4o(self, prompt: str) -> Dict[str, Any]:
-        """
-        Call GPT-4o to extract structured data from user message.
-
-        Uses JSON mode for reliable structured output.
-        """
-
-        response = self.openai.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are a data extraction assistant. Extract structured information from user messages and return valid JSON."
-                },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-            response_format={"type": "json_object"},  # Force JSON output
-            temperature=0.1,  # Low temp for consistency
-        )
-
-        extracted_json = response.choices[0].message.content
-        return json.loads(extracted_json)
-
-
-    def _generate_question_for_state(self, state: str) -> str:
-        """
-        Generate the first question for a new state.
-
-        Uses GPT-4o for natural, conversational phrasing.
-        """
-
-        # Predefined questions (can also use GPT-4o to generate)
-        QUESTIONS = {
-            OnboardingState.HOTEL_BASICS: "Let's get started! What's your hotel called?",
-            OnboardingState.ROOM_TYPES: "Great! Now let's set up your rooms. How many different room types do you have? (For example: standard rooms, suites, etc.)",
-            OnboardingState.ROOM_INVENTORY: "Perfect! I'll generate room numbers for you. How would you like me to number them? (e.g., 101-140, 201-250)",
-            OnboardingState.POLICIES: "Almost done! What time can guests check in?",
-            OnboardingState.REVIEW: "Here's what I've set up for you. Please review and confirm:",
-        }
-
-        return QUESTIONS.get(state, "Tell me more.")
-
-
-    def _validate_data(self, data: Dict, state: str) -> tuple[bool, list]:
-        """
-        Validate extracted data using F-001 model validators.
-
-        Returns: (is_valid, error_list)
-        """
-
-        errors = []
-
-        if state == OnboardingState.HOTEL_BASICS:
-            # Validate hotel name
-            if 'name' in data:
-                if len(data['name']) < 3:
-                    errors.append("Hotel name must be at least 3 characters")
-
-            # Validate email format
-            if 'contact' in data and 'email' in data['contact']:
-                import re
-                email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-                if not re.match(email_pattern, data['contact']['email']):
-                    errors.append("Invalid email format")
-
-            # Validate timezone
-            if 'timezone' in data:
-                import pytz
-                if data['timezone'] not in pytz.all_timezones:
-                    errors.append(f"Invalid timezone: {data['timezone']}")
-
-        elif state == OnboardingState.ROOM_TYPES:
-            # Validate pricing
-            if 'base_price' in data:
-                try:
-                    price = float(data['base_price'])
-                    if price <= 0:
-                        errors.append("Price must be greater than $0")
-                except (ValueError, TypeError):
-                    errors.append("Invalid price format")
-
-            # Validate occupancy logic (from F-001)
-            if all(k in data for k in ['max_occupancy', 'max_adults', 'max_children']):
-                if data['max_adults'] > data['max_occupancy']:
-                    errors.append("Max adults cannot exceed max occupancy")
-                if data['max_children'] > data['max_occupancy']:
-                    errors.append("Max children cannot exceed max occupancy")
-
-        return (len(errors) == 0, errors)
+    if edit_target == "business_data":
+        return True
+    elif edit_target == "guest_presentation":
+        return False  # AI controls this
+    elif edit_target == "ai_enhanced_content":
+        return False  # But can click "Regenerate"
 ```
 
 ---
 
-## 📊 Session State (Redis)
+## 5. Conversation Flow
 
-### Data Structure:
+### 5.1 State Machine (5 States)
+
+```
+START → HOTEL_BASICS → ROOM_TYPES → POLICIES → REVIEW → COMPLETE
+```
+
+**State 1: HOTEL_BASICS** (2 min)
+- **First question**: "What's your hotel website?" OR "Hotel name and city?"
+- **If website provided**: Scrape → extract → show preview → confirm
+- **If no website**: Google Places lookup → manual questions
+- **Collect**: Name, address, contact, timezone, currency
+- **Smart defaults**: Currency from country, timezone from zip, tax rates
+
+**State 2: ROOM_TYPES** (4 min)
+- For each room type:
+  - Name (e.g., "Ocean View King")
+  - Basic description (AI enhances)
+  - Beds (structured picker)
+  - Occupancy (numbers with validation)
+  - Amenities (checklist)
+  - Pricing
+  - Quantity
+- Can loop for multiple types
+- Auto-generate room numbers
+
+**State 3: POLICIES** (2 min)
+- Check-in/out times (smart defaults shown)
+- Payment policy (structured form)
+- Cancellation policy (structured form)
+- Service fees (optional)
+- Tax rates (already set from location)
+
+**State 4: REVIEW** (1 min)
+- Show full website preview
+- List all data collected
+- "Anything you want to change?"
+- User can edit any field via modals
+
+**State 5: COMPLETE** (1 min)
+- Create all F-001 records
+- Generate hero images (FLUX or stock)
+- Set up email templates
+- Deploy website
+- Show live URL + success message
+
+**Total: ~10 minutes**
+
+### 5.2 Example Conversation (Accelerated Path)
+
+```
+┌─── NORA ──────────────────────────┬─── PREVIEW ─────────────┐
+│                                   │                         │
+│ 🎬 [Intro video plays 45 sec]     │  [Stayfull logo]        │
+│                                   │                         │
+│ NORA: Ready? Let's build your     │                         │
+│       hotel! Do you have a        │                         │
+│       website I can look at?      │                         │
+│                                   │                         │
+│ 🎤 [Voice] OR ⌨️ [Text]           │                         │
+│                                   │                         │
+│ YOU: sunsetvilla.com              │                         │
+│                                   │                         │
+│ NORA: Perfect! Give me a few      │  🔍 Scanning website... │
+│       seconds...                  │  🔍 Checking Google...  │
+│                                   │  [Progress animation]   │
+│ [8 seconds]                       │                         │
+│                                   │                         │
+│ NORA: Awesome! I found tons of    │  ┌─────────────────┐   │
+│       info about Sunset Villa.    │  │ SUNSET VILLA    │   │
+│       I pulled:                   │  │ Miami, FL       │   │
+│                                   │  │                 │   │
+│       ✅ Hotel name & address      │  │ Ocean View King │   │
+│       ✅ Contact info              │  │ From $199/nt    │   │
+│       ✅ 3 room types with pricing │  │                 │   │
+│       ✅ 12 beautiful photos       │  │ [Room photos]   │   │
+│                                   │  └─────────────────┘   │
+│       Check out the preview! →    │  [Edit] buttons on     │
+│       Everything look right?      │  hover for each field  │
+│                                   │                         │
+│ YOU: [Voice] "looks great!"       │                         │
+│                                   │                         │
+│ NORA: Fantastic! Quick question - │                         │
+│       how many rooms do you have  │                         │
+│       total?                      │                         │
+│                                   │                         │
+│ YOU: [Voice] "45 rooms - 20 kings,│                         │
+│      15 suites, 10 bungalows"     │                         │
+│                                   │                         │
+│ NORA: Got it! I just created all  │  ✅ 45 rooms created    │
+│       45 rooms and numbered them  │  • 20 Ocean View Kings │
+│       101-145. Want different     │  • 15 Deluxe Suites    │
+│       numbers?                    │  • 10 Beach Bungalows  │
+│                                   │                         │
+│ YOU: no that's perfect            │                         │
+│                                   │                         │
+│ NORA: Love it! Now, payment       │                         │
+│       policy. What % deposit do   │                         │
+│       you need at booking?        │                         │
+│                                   │                         │
+│ YOU: 50%                          │                         │
+│                                   │                         │
+│ NORA: And the rest is due...?     │  💳 50% deposit at      │
+│                                   │     booking, rest on    │
+│ YOU: on arrival                   │     arrival             │
+│                                   │  [Edit] ←               │
+│ NORA: Perfect! Here's how guests  │                         │
+│       will see that →             │                         │
+│                                   │                         │
+│       [Continues for 3 more min]  │                         │
+│                                   │                         │
+│ NORA: And... done! 🎉             │  ✅ LIVE                │
+│                                   │                         │
+│       Your hotel is live at:      │  sunsetvilla.stayfull   │
+│       sunsetvilla.stayfull.com    │  .com                   │
+│                                   │                         │
+│       We did that in 8 minutes!   │  [Full website preview] │
+│                                   │                         │
+│       Remember: I'm always here   │  [Share link button]    │
+│       if you need anything!       │                         │
+│                                   │                         │
+│ [Take me to my dashboard →]       │                         │
+└───────────────────────────────────┴─────────────────────────┘
+```
+
+**Time saved with acceleration:**
+- Website scraping: -8 minutes
+- Google Places: -3 minutes
+- Voice input: -2 minutes
+- Smart defaults: -2 minutes
+- **Total: 10 minutes instead of 25**
+
+---
+
+## 6. Nora as System-Wide AI Agent
+
+### 6.1 Beyond Onboarding
+
+**Critical Architectural Change**: Nora is NOT just for onboarding. She's the primary interface for ALL PMS operations.
+
+**Available From:**
+- Floating icon on every page (💬 Ask Nora)
+- Keyboard shortcut (Cmd+K / Ctrl+K)
+- Can be voice-activated ("Hey Nora") - post-MVP
+
+**System-Wide Capabilities:**
 
 ```python
-# Stored in Redis with 24-hour TTL
-SESSION_KEY = f"onboarding:{session_id}"
-
-session_data = {
-    "session_id": "uuid",
-    "user_id": 123,
-    "organization_id": 456,
-    "current_step": "room_types",
-    "progress": 0.4,  # 40% complete
-
-    "conversation_history": [
-        {"role": "ai", "message": "What's your hotel called?", "timestamp": "..."},
-        {"role": "user", "message": "Seaside Resort", "timestamp": "..."},
-        {"role": "ai", "message": "Where is Seaside Resort located?", "timestamp": "..."},
-        # ... full conversation
+NORA_CAPABILITIES = {
+    # F-002: Onboarding
+    "setup": [
+        "Set up new hotel",
+        "Create room types",
+        "Configure policies",
+        "Import data from website/CSV"
     ],
 
-    "data": {
-        "hotel_basics": {
-            "name": "Seaside Resort",
-            "address": {
-                "street": "123 Ocean Drive",
-                "city": "Miami",
-                "state": "FL",
-                "postal_code": "33139",
-                "country": "US"
-            },
-            "contact": {
-                "email": "info@seaside.com",
-                "phone": "+1-305-555-1234"
-            },
-            "type": "independent",
-            "timezone": "America/New_York",
-            "currency": "USD"
-        },
+    # F-001: Core PMS Operations
+    "reservations": [
+        "Create booking",
+        "Modify reservation",
+        "Cancel booking",
+        "Check in guest",
+        "Check out guest",
+        "Process payment",
+        "Send confirmation"
+    ],
 
-        "room_types": [
-            {
-                "name": "Standard Room",
-                "code": "STD",
-                "count": 40,
-                "max_occupancy": 2,
-                "max_adults": 2,
-                "max_children": 1,
-                "beds": [{"type": "queen", "count": 1}],
-                "amenities": ["WiFi", "TV", "Mini Fridge"],
-                "base_price": 150.00,
-                "size_sqft": 300
-            },
-            {
-                "name": "Ocean View Suite",
-                "code": "OVS",
-                "count": 10,
-                "max_occupancy": 4,
-                "max_adults": 2,
-                "max_children": 2,
-                "beds": [
-                    {"type": "king", "count": 1},
-                    {"type": "sofa_bed", "count": 1}
-                ],
-                "amenities": ["WiFi", "TV", "Ocean View", "Balcony", "Mini Bar", "Safe"],
-                "base_price": 350.00,
-                "size_sqft": 550
-            }
-        ],
+    "inventory": [
+        "Check availability",
+        "Block rooms",
+        "Update room status",
+        "View occupancy"
+    ],
 
-        "room_inventory": {
-            "numbering_scheme": "sequential",
-            "starting_number": 101
-        },
+    # F-004: Revenue Management
+    "pricing": [
+        "Adjust rates",
+        "Create promotions",
+        "Set seasonal pricing",
+        "Analyze competitors"
+    ],
 
-        "policies": {
-            "check_in_time": "15:00:00",
-            "check_out_time": "11:00:00",
-            "cancellation_hours": 24,
-            "deposit_percent": 0  # Optional
-        }
-    },
+    # F-005: Reporting
+    "analytics": [
+        "Show revenue",
+        "List arrivals/departures",
+        "Generate reports",
+        "Export data"
+    ],
 
-    "created_at": "2025-10-23T12:00:00Z",
-    "updated_at": "2025-10-23T12:08:00Z"
+    # F-006+: AI Features
+    "communication": [
+        "Send guest message",
+        "Generate email",
+        "Respond to review",
+        "Draft social post"
+    ],
+
+    "operations": [
+        "Assign housekeeping",
+        "Flag maintenance",
+        "Train staff",
+        "Answer questions"
+    ]
 }
 ```
 
----
+### 6.2 Example Daily Operations (After Onboarding)
 
-## 🏭 Data Generation Engine
+```
+USER: [Clicks Nora icon] "Who's checking in today?"
 
-### Final Step: Create All Records
+NORA: You have 8 guests checking in today at Sunset Villa:
+
+      1. John Smith - Room 101 - 3:00 PM
+      2. Maria Garcia - Room 205 - 4:00 PM
+      ... [shows list]
+
+      Want me to send pre-arrival emails?
+
+USER: yes
+
+NORA: ✓ Sent to 3 guests who haven't received theirs yet.
+      They can mobile check-in if they want.
+
+      Anything else?
+
+USER: how's revenue this week?
+
+NORA: Strong week! You're at:
+
+      • $18,450 (85% occupancy)
+      • Up 12% vs. last week
+      • On track for $78k this month
+
+      Your Deluxe Suites are killing it - 95% booked.
+      Want to raise rates for next weekend?
+
+USER: yes, by how much?
+
+NORA: Based on demand, I'd recommend $320 (currently $299).
+      Should I update that?
+
+USER: do it
+
+NORA: ✓ Done! Rates for next weekend (Jun 15-17) are
+      now $320/night for Deluxe Suites.
+```
+
+### 6.3 Persistent Context Model
 
 ```python
-# apps/onboarding/services/data_generator.py
+# apps/ai_agent/models.py
 
-from apps.core.models import Organization
-from apps.hotels.models import Hotel, RoomType, Room
-from apps.staff.models import Staff
-from decimal import Decimal
-
-
-class OnboardingDataGenerator:
+class NoraContext(models.Model):
     """
-    Generates all F-001 records from onboarding session data.
-
-    Creates:
-    - Hotel
-    - RoomTypes
-    - Rooms (bulk create)
-    - Default photos
+    Persistent AI context for each user.
+    Unlike session-based onboarding, this persists forever.
     """
 
-    def generate_hotel_from_session(self, session_data: dict, user) -> Hotel:
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
+
+    # Conversation history (rolling 30-day window)
+    conversation_history = models.JSONField(default=list)
+
+    # User preferences learned over time
+    preferences = models.JSONField(default=dict)
+    # Example: {
+    #   "prefers_voice": True,
+    #   "tone": "enthusiastic",
+    #   "typical_questions": ["check today's arrivals", "revenue this month"]
+    # }
+
+    # Current task context
+    active_task = models.CharField(max_length=50, null=True, blank=True)
+    # Example: "onboarding", "creating_booking", "generating_report"
+
+    task_state = models.JSONField(default=dict)
+    # Example: {"onboarding_step": "ROOM_TYPES", "rooms_created": 2}
+
+    # Recent actions (for context continuity)
+    recent_actions = models.JSONField(default=list)
+    # Example: [
+    #   {"action": "created_booking", "timestamp": "...", "details": {...}},
+    #   {"action": "updated_rates", "timestamp": "...", "details": {...}}
+    # ]
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['user', 'organization']
+```
+
+**Context Persistence Examples:**
+
+```
+Day 1 (Onboarding):
+USER: "Hi Nora"
+NORA: "Welcome! Let's set up your hotel..."
+
+Day 3 (Returns after break):
+USER: "Hi Nora"
+NORA: "Welcome back! We started setting up Sunset Villa
+       on Monday. You created 2 room types - want to
+       continue where we left off?"
+
+Day 7 (Daily operations):
+USER: "Show today's bookings"
+NORA: "You have 12 check-ins today at Sunset Villa..."
+
+Day 30 (Analytics):
+USER: "How's revenue vs last month?"
+NORA: "Great question! Sunset Villa is up 23% vs. last
+       month. Your Ocean View Kings are top performers."
+```
+
+### 6.4 Multi-Property Context
+
+**Design Decision**: One hotel at a time.
+
+**Why**: Prevents confusion, clearer conversations, simpler implementation.
+
+**UX Pattern:**
+```
+┌─── HEADER ────────────────────────────────────┐
+│  Stayfull                                     │
+│  [Sunset Villa ▼]  ← Dropdown to switch      │
+│                      between hotels           │
+│  💬 Ask Nora                                  │
+└───────────────────────────────────────────────┘
+```
+
+**Context Switching:**
+```
+USER: [Switches dropdown to "Ocean View Resort"]
+
+NORA: "Switched to Ocean View Resort. What can I help with?"
+
+USER: "Show today's bookings"
+
+NORA: "You have 6 check-ins today at Ocean View Resort..."
+```
+
+---
+
+## 7. Voice Implementation
+
+### 7.1 Technology Stack
+
+**Voice Input (Speech-to-Text):**
+- OpenAI Whisper API
+- Supports multiple accents
+- 99% accuracy for clear audio
+- $0.006 per minute
+
+**Voice Output (Text-to-Speech):**
+- **Option A**: ElevenLabs ($0.30 per 1K chars, best quality)
+- **Option B**: OpenAI Realtime API (lower latency, integrated)
+- **Decision**: Start with either, easily swappable via config
+
+**Voice Persona Settings:**
+- **Default**: Enthusiastic, professional, upbeat
+- **Customizable** (in user settings):
+  - Enthusiastic (default)
+  - Professional & Calm
+  - Casual & Friendly
+- **Voice**: Female, clear, conversational pace
+- **Language**: English only (MVP)
+
+### 7.2 Voice UX Flow
+
+```
+1. User clicks 🎤 microphone icon
+2. Recording starts → waveform animation
+3. User speaks
+4. Auto-detects pause OR user clicks stop
+5. Audio uploads to server
+6. Whisper transcribes (1-2 seconds)
+7. GPT-4o processes request (2-3 seconds)
+8. ElevenLabs/OpenAI generates voice (2-3 seconds)
+9. Response plays while text appears simultaneously
+10. Ready for next input (voice or text)
+```
+
+**Total Latency: 5-8 seconds** (acceptable for conversational AI)
+
+### 7.3 Error Handling: Voice Recognition Failure
+
+```
+SCENARIO: Whisper can't transcribe (noisy audio, unclear speech)
+
+NORA: "Sorry, I didn't catch that. Want to type it instead?"
+
+[Text input field becomes active/highlighted]
+
+USER: [Types message]
+
+NORA: "Got it! ..." [Continues normally]
+```
+
+**Key UX**: Text input ALWAYS available as fallback. Never force voice-only.
+
+---
+
+## 8. Technical Architecture
+
+### 8.1 System Components
+
+```
+Frontend:
+- Django Templates + HTMX (split-screen chat)
+- TailwindCSS (responsive design)
+- Alpine.js (voice recording, live interactions)
+
+Backend:
+- Django (conversation orchestration)
+- OpenAI GPT-4o (intent detection, data extraction, content generation)
+- OpenAI Whisper (speech-to-text)
+- ElevenLabs OR OpenAI Realtime (text-to-speech)
+- Redis (session state for onboarding, 24hr TTL)
+- PostgreSQL (NoraContext, hotel data)
+
+External APIs:
+- Google Places API (location data, photos)
+- Unsplash API (stock photos)
+- Replicate FLUX (AI image generation)
+- Beautiful Soup (website scraping)
+```
+
+### 8.2 Data Flow
+
+```
+User Input (Voice/Text)
+    ↓
+[If voice] Whisper Transcription (1-2s)
+    ↓
+GPT-4o Intent Detection
+    ↓
+Route to Feature Handler (onboarding/bookings/etc)
+    ↓
+Extract/Validate Data
+    ↓
+Update Context + Preview
+    ↓
+Generate Response (GPT-4o)
+    ↓
+[If voice enabled] ElevenLabs TTS (2-3s)
+    ↓
+Return to User (text + optional audio)
+```
+
+### 8.3 File Structure
+
+```
+apps/ai_agent/
+├── models.py                    # NoraContext (persistent)
+├── services/
+│   ├── nora_agent.py           # Main orchestration
+│   ├── intent_router.py        # Route to features
+│   ├── conversation_engine.py  # Dialog management
+│   ├── voice_handler.py        # Whisper + ElevenLabs
+│   ├── data_accelerator.py     # Scraping + APIs
+│   ├── content_formatter.py    # AI enhancement
+│   └── edit_controller.py      # Editable vs locked fields
+├── views.py                     # Chat endpoints
+├── urls.py
+├── templates/ai_agent/
+│   ├── chat.html               # Split-screen UI
+│   ├── intro_video.html        # "Play Me First"
+│   └── components/
+│       ├── editable_field.html
+│       ├── edit_modal.html
+│       └── progress_bar.html
+└── tests/
+    ├── test_data_extraction.py
+    ├── test_conversation.py
+    ├── test_voice.py
+    └── test_edit_controls.py
+```
+
+---
+
+## 9. Data Acceleration Implementation
+
+### 9.1 Website Scraper
+
+```python
+# apps/ai_agent/services/data_accelerator.py
+
+class DataAccelerator:
+    """Extract maximum data from minimum input"""
+
+    def extract_from_website(self, url: str) -> dict:
         """
-        Create complete operational hotel from session data.
-
-        Returns: Hotel instance (ready to accept bookings)
+        Scrape hotel website for structured data.
+        Uses BeautifulSoup + GPT-4o for intelligent extraction.
         """
+        response = requests.get(url, timeout=10)
+        soup = BeautifulSoup(response.text, 'html.parser')
 
-        hotel_data = session_data['data']['hotel_basics']
-        room_types_data = session_data['data']['room_types']
-        policies_data = session_data['data']['policies']
-
-        # 1. Get or create organization (from signup)
-        organization = user.staff.organization
-
-        # 2. Create Hotel
-        hotel = Hotel.objects.create(
-            organization=organization,
-            name=hotel_data['name'],
-            slug=self._generate_slug(hotel_data['name']),
-            type=hotel_data['type'],
-            address=hotel_data['address'],
-            contact=hotel_data['contact'],
-            timezone=hotel_data['timezone'],
-            currency=hotel_data['currency'],
-            languages=['en'],  # Default, can customize later
-            check_in_time=policies_data['check_in_time'],
-            check_out_time=policies_data['check_out_time'],
-            total_rooms=sum(rt['count'] for rt in room_types_data),
-            is_active=True,
-        )
-
-        # 3. Create RoomTypes
-        for rt_data in room_types_data:
-            room_type = RoomType.objects.create(
-                hotel=hotel,
-                name=rt_data['name'],
-                code=rt_data['code'],
-                description=f"{rt_data['name']} at {hotel.name}",
-                max_occupancy=rt_data['max_occupancy'],
-                max_adults=rt_data['max_adults'],
-                max_children=rt_data['max_children'],
-                base_price=Decimal(str(rt_data['base_price'])),
-                size_sqm=self._sqft_to_sqm(rt_data.get('size_sqft', 0)),
-                bed_configuration=rt_data['beds'],
-                amenities=rt_data['amenities'],
-                images=self._get_stock_photos(rt_data['name']),  # Stock photos
-                is_active=True,
-                display_order=0,
-            )
-
-            # 4. Generate Room records (bulk create for performance)
-            rooms_to_create = []
-            room_count = rt_data['count']
-
-            # Generate room numbers (e.g., 101-140 for 40 rooms)
-            room_numbers = self._generate_room_numbers(
-                count=room_count,
-                scheme=session_data['data']['room_inventory']['numbering_scheme']
-            )
-
-            for room_number in room_numbers:
-                rooms_to_create.append(
-                    Room(
-                        hotel=hotel,
-                        room_type=room_type,
-                        room_number=room_number,
-                        floor=int(room_number[0]) if room_number.isdigit() else 1,
-                        status='available',
-                        cleaning_status='clean',
-                        is_active=True
-                    )
-                )
-
-            # Bulk create (fast!)
-            Room.objects.bulk_create(rooms_to_create)
-
-        return hotel
-
-
-    def _generate_room_numbers(self, count: int, scheme: str) -> list[str]:
-        """
-        Generate room numbers based on scheme.
-
-        Schemes:
-        - sequential: 101, 102, 103...
-        - floor_based: 101-110 (floor 1), 201-210 (floor 2)
-        """
-
-        if scheme == 'sequential':
-            return [str(100 + i + 1) for i in range(count)]
-
-        elif scheme == 'floor_based':
-            # Distribute across floors (10 rooms per floor)
-            room_numbers = []
-            floor = 1
-            room_on_floor = 1
-
-            for _ in range(count):
-                room_numbers.append(f"{floor}{room_on_floor:02d}")
-                room_on_floor += 1
-
-                if room_on_floor > 10:  # Move to next floor
-                    floor += 1
-                    room_on_floor = 1
-
-            return room_numbers
-
-
-    def _get_stock_photos(self, room_type_name: str) -> list:
-        """
-        Return stock photos for room type.
-
-        MVP: Use curated stock photo library
-        Future: AI-generate images with DALL-E
-        """
-
-        # Stock photo library (Unsplash, Pexels, etc.)
-        STOCK_PHOTOS = {
-            'standard': [
-                {'url': 'https://images.unsplash.com/photo-1...', 'alt': 'Standard Room'},
-            ],
-            'suite': [
-                {'url': 'https://images.unsplash.com/photo-2...', 'alt': 'Suite'},
-            ],
-            'ocean': [
-                {'url': 'https://images.unsplash.com/photo-3...', 'alt': 'Ocean View'},
-            ],
+        raw_data = {
+            "hotel_name": self._extract_hotel_name(soup),
+            "address": self._extract_address(soup),
+            "phone": self._extract_phone(soup),
+            "email": self._extract_email(soup),
+            "room_types": self._extract_rooms(soup),
+            "photos": self._extract_images(soup),
+            "policies": self._extract_policies(soup),
+            "pricing": self._extract_pricing(soup)
         }
 
-        # Match by keywords
-        for keyword, photos in STOCK_PHOTOS.items():
-            if keyword.lower() in room_type_name.lower():
-                return photos
+        # Use GPT-4o to clean and structure messy extracted data
+        return self._clean_with_ai(raw_data)
 
-        return STOCK_PHOTOS['standard']  # Default
+    def _extract_hotel_name(self, soup):
+        """Try multiple strategies"""
+        # 1. Title tag
+        title = soup.find('title')
+        if title:
+            return title.text.strip()
+
+        # 2. h1 tag
+        h1 = soup.find('h1')
+        if h1:
+            return h1.text.strip()
+
+        # 3. og:title meta
+        og_title = soup.find('meta', property='og:title')
+        if og_title:
+            return og_title.get('content', '').strip()
+
+        return None
+
+    def _clean_with_ai(self, raw_data: dict) -> dict:
+        """Use GPT-4o to structure messy scraped data"""
+        prompt = f"""
+        Clean and structure this scraped hotel data:
+
+        {json.dumps(raw_data, indent=2)}
+
+        Return clean JSON with these fields:
+        - hotel_name: string
+        - address: {{street, city, state, zip, country}}
+        - contact: {{phone, email}}
+        - room_types: [{{name, description, pricing}}]
+        - policies: {{check_in, check_out, cancellation}}
+
+        Infer missing data intelligently.
+        """
+
+        response = openai.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt}],
+            response_format={"type": "json_object"}
+        )
+
+        return json.loads(response.choices[0].message.content)
+```
+
+### 9.2 Google Places Integration
+
+```python
+import googlemaps
+
+def enrich_with_google_places(self, hotel_name: str, city: str) -> dict:
+    """Get verified, high-quality data from Google"""
+    gmaps = googlemaps.Client(key=settings.GOOGLE_PLACES_API_KEY)
+
+    # Find place
+    result = gmaps.find_place(
+        input=f"{hotel_name}, {city}",
+        input_type="textquery",
+        fields=[
+            "formatted_address",
+            "formatted_phone_number",
+            "website",
+            "photos",
+            "geometry",  # lat/lng for timezone
+            "rating",
+            "opening_hours"
+        ]
+    )
+
+    if not result['candidates']:
+        return {}
+
+    place = result['candidates'][0]
+
+    # Get timezone from coordinates
+    lat = place['geometry']['location']['lat']
+    lng = place['geometry']['location']['lng']
+    timezone_result = gmaps.timezone(location=(lat, lng))
+
+    return {
+        "address": place.get('formatted_address'),
+        "phone": place.get('formatted_phone_number'),
+        "website": place.get('website'),
+        "photos": self._download_google_photos(place.get('photos', [])),
+        "timezone": timezone_result.get('timeZoneId'),
+        "rating": place.get('rating')
+    }
+
+def _download_google_photos(self, photo_references: list) -> list:
+    """Download high-res Google Place photos"""
+    photos = []
+    for ref in photo_references[:10]:  # Max 10 photos
+        url = gmaps.places_photo(
+            photo_reference=ref['photo_reference'],
+            max_width=1200
+        )
+        photos.append(url)
+    return photos
+```
+
+### 9.3 Smart Defaults from Location
+
+```python
+def infer_from_location(self, zip_code: str) -> dict:
+    """Smart defaults based on location"""
+
+    # Lookup tax rates (use API or database)
+    tax_data = self._lookup_tax_rates(zip_code)
+
+    # Get timezone from zip
+    timezone = self._zip_to_timezone(zip_code)
+
+    # Get currency from country
+    country = self._zip_to_country(zip_code)
+    currency = COUNTRY_CURRENCY_MAP.get(country, 'USD')
+
+    # Industry standard times
+    defaults = {
+        "timezone": timezone,
+        "currency": currency,
+        "tax_rate": tax_data['total'],
+        "check_in_time": "15:00:00",
+        "check_out_time": "11:00:00",
+        "cancellation_hours": 24,
+        "deposit_percentage": 50
+    }
+
+    return defaults
 ```
 
 ---
 
-## 📊 Implementation Phases
+## 10. Content Formatting (AI Enhancement)
+
+### 10.1 Room Description Enhancement
+
+**User Input (Basic):**
+```
+"Nice room with ocean view and king bed"
+```
+
+**AI Output (Enhanced for Guests):**
+```
+"Experience Miami's coastal beauty in this elegantly appointed
+king room featuring stunning ocean views from your private
+balcony. Perfect for couples seeking a romantic coastal getaway."
+```
+
+**Implementation:**
+```python
+def enhance_room_description(self, basic: str, context: dict) -> str:
+    """Transform basic input into marketing copy"""
+
+    prompt = f"""
+    Transform this basic room description into professional marketing copy:
+
+    Basic input: "{basic}"
+
+    Context:
+    - Hotel: {context['hotel_name']} in {context['city']}
+    - Room: {context['room_type_name']}
+    - Amenities: {', '.join(context['amenities'])}
+    - Beds: {context['bed_config']}
+
+    Requirements:
+    - 3-4 sentences max
+    - Enthusiastic but professional tone
+    - Highlight unique selling points
+    - End with benefit statement
+    - No clichés like "luxurious" or "world-class"
+    - Use specific details from context
+
+    Return plain text only (no markdown).
+    """
+
+    response = openai.chat.completions.create(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.7  # Some creativity
+    )
+
+    return response.choices[0].message.content.strip()
+```
+
+### 10.2 Policy Formatting (LOCKED Presentation)
+
+**User Input (Structured Form):**
+```python
+{
+    "deposit_amount": 50,
+    "deposit_type": "%",
+    "deposit_timing": "at_booking",
+    "balance_timing": "on_arrival"
+}
+```
+
+**AI Output (Guest-Facing, LOCKED):**
+```
+"💳 50% deposit at booking, rest on arrival"
+```
+
+**Implementation:**
+```python
+def format_payment_policy(self, data: dict) -> str:
+    """
+    Format payment policy for guests.
+    USER CANNOT EDIT THIS TEXT - only the structured inputs.
+    """
+
+    prompt = f"""
+    Format this payment policy for hotel guests:
+
+    Data:
+    - Deposit: {data['amount']}{data['type']}
+    - Due: {data['timing']}
+    - Balance due: {data['balance_timing']}
+
+    Requirements:
+    - One sentence, crystal clear
+    - Use 💳 emoji at start
+    - Friendly, conversational tone
+    - Example format: "50% deposit at booking, rest on arrival"
+
+    Return ONLY the formatted text (no extra words).
+    """
+
+    response = openai.chat.completions.create(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.1  # Low for consistency
+    )
+
+    return response.choices[0].message.content.strip()
+
+
+def format_cancellation_policy(self, data: dict) -> str:
+    """Format cancellation (LOCKED presentation)"""
+
+    hours = data['free_hours']
+    penalty = data['penalty_percentage']
+
+    prompt = f"""
+    Format cancellation policy for hotel guests:
+
+    Data:
+    - Free cancellation until: {hours} hours before check-in
+    - After deadline: {penalty}% charge
+
+    Requirements:
+    - Two sentences max
+    - Clear what happens and when
+    - Use ❌ emoji at start
+    - Friendly but direct
+    - Example: "Free cancellation up to 24 hours before check-in.
+      After that, you'll be charged 100% of your booking."
+
+    Return ONLY the formatted text.
+    """
+
+    response = openai.chat.completions.create(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.1
+    )
+
+    return response.choices[0].message.content.strip()
+```
+
+---
+
+## 11. Error Handling & Edge Cases
+
+### 11.1 Voice Recognition Failure
+```
+NORA: "Sorry, I didn't catch that. Want to type it instead?"
+[Shows text input]
+```
+
+### 11.2 Website Scraping Failure
+```
+NORA: "I tried scanning your website but couldn't extract much.
+       No worries - I'll ask you questions instead!"
+[Falls back to manual Q&A]
+```
+
+### 11.3 API Timeout (OpenAI/ElevenLabs)
+```python
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(min=2, max=10)
+)
+def call_openai():
+    try:
+        return openai.chat.completions.create(...)
+    except openai.APIError:
+        logger.error("OpenAI timeout")
+        raise
+
+# If all retries fail:
+NORA: "I'm having trouble connecting. Your progress is saved -
+       let's continue in a moment."
+```
+
+### 11.4 Unclear Intent
+```
+NORA: "I want to make sure I help with the right thing.
+       Did you want to:
+
+       1. Create a new booking
+       2. Check today's arrivals
+       3. View occupancy report
+       4. Something else"
+
+[Shows button options]
+```
+
+### 11.5 Data Validation Failure
+```
+SCENARIO: Check-out time (10am) before check-in (3pm)
+
+NORA: "Hmm, check-out (10am) can't be before check-in (3pm).
+       What should check-out time be?"
+[Highlights error, requests correction]
+```
+
+---
+
+## 12. Cost Analysis
+
+### 12.1 Per-Onboarding Cost
+
+```
+OpenAI GPT-4o:
+- ~30 API calls during onboarding
+- ~500 tokens per call = 15K tokens total
+- Input: $2.50/1M tokens = $0.0375
+- Output: $10/1M tokens = $0.15
+- Total: ~$0.19
+
+Voice (ElevenLabs):
+- ~20 voice responses
+- ~50 words each = 1,000 chars total
+- $0.30 per 1K chars = $0.30
+
+Voice Input (Whisper):
+- ~5 minutes voice input
+- $0.006 per minute = $0.03
+
+FLUX Image Generation:
+- 3 hero images
+- $0.03 per image = $0.09
+
+Google Places API:
+- 1 lookup
+- $0.017 per call = $0.02
+
+Website Scraping:
+- Free (just bandwidth)
+
+─────────────────────────────
+TOTAL PER ONBOARDING: ~$0.63
+─────────────────────────────
+```
+
+**At Scale:**
+- 100 onboardings/month = $63
+- 1,000 onboardings/month = $630
+- **Revenue per hotel**: $999/month
+- **AI cost**: 0.06% of revenue (negligible)
+
+### 12.2 Daily Operations Cost (Nora After Onboarding)
+
+```
+Per Hotel Per Day:
+- ~50 Nora interactions
+- GPT-4o: ~$0.30
+- Voice: ~$0.20
+- Total: ~$0.50/day = $15/month
+
+Revenue: $999/month
+AI Cost: $15/month (1.5%)
+Margin: 98.5%
+```
+
+**Conclusion**: Don't optimize AI costs until 10,000+ hotels.
+
+---
+
+## 13. Success Metrics
+
+### 13.1 Onboarding Performance
+- ✅ **10-12 minute completion time**
+- ✅ **90%+ completion rate** (vs 40% industry)
+- ✅ **95%+ data extraction accuracy**
+- ✅ **<$1 AI cost per onboarding**
+- ✅ **Zero support tickets for onboarding**
+
+### 13.2 User Satisfaction
+- ✅ **Net Promoter Score**: 50+
+- ✅ **Positive feedback rate**: 80%+
+- ✅ **"Wow" mentions**: Track sentiment
+
+### 13.3 Technical Performance
+- ✅ **Voice latency**: <8 seconds
+- ✅ **Preview update**: <2 seconds
+- ✅ **API uptime**: 99.5%+
+- ✅ **Mobile responsive**: All devices
+
+---
+
+## 14. Localization
+
+**MVP**: English only
+**Reason**: Test core concept first, faster to market
+
+**Post-MVP** (F-002.1):
+- Spanish (US hospitality market)
+- French (Canada)
+- Auto-detect from browser
+- GPT-4o supports 50+ languages
+- ElevenLabs supports 29 languages
+
+**Technical Prep**:
+- Use Django i18n from day one
+- All strings in translation files
+- Easy to add languages later
+
+---
+
+## 15. Implementation Phases
 
 ### Phase 1: Foundation (8 hours)
-- [ ] Create `onboarding` Django app
-- [ ] Set up Redis connection for session storage
-- [ ] Create session management service
-- [ ] Create state machine logic
-- [ ] Write unit tests for state transitions
+- [ ] Create `ai_agent` Django app
+- [ ] Install dependencies (OpenAI, ElevenLabs, Redis)
+- [ ] Create NoraContext model
+- [ ] Build conversation engine structure
+- [ ] Set up Redis session management
 
-### Phase 2: AI Integration (10 hours)
-- [ ] Set up OpenAI API client
-- [ ] Build conversation engine
-- [ ] Create extraction prompts for each state
-- [ ] Implement GPT-4o structured output
-- [ ] Add validation logic
-- [ ] Test extraction accuracy (95%+ target)
+### Phase 2: Onboarding Core (12 hours)
+- [ ] Build state machine (5 states)
+- [ ] Implement data extraction (website, Google Places)
+- [ ] Create conversation prompts
+- [ ] Build data validation
+- [ ] Implement content formatting (AI enhancement)
 
-### Phase 3: Frontend Chat UI (8 hours)
-- [ ] Create Django template for chat interface
-- [ ] Implement HTMX real-time messaging
-- [ ] Add progress bar component
-- [ ] Style with Tailwind CSS
-- [ ] Make mobile-responsive
-- [ ] Test UX flow
+### Phase 3: Voice Integration (8 hours)
+- [ ] Implement Whisper transcription
+- [ ] Implement ElevenLabs/OpenAI Realtime TTS
+- [ ] Build voice UI (recording, playback)
+- [ ] Add fallback to text
+- [ ] Test latency and error handling
 
-### Phase 4: Data Generation (8 hours)
-- [ ] Build data generator service
-- [ ] Implement room number generation
-- [ ] Add stock photo library
-- [ ] Create bulk room creation
-- [ ] Test with various hotel configurations
-- [ ] Verify F-001 model validation works
+### Phase 4: UX/UI (10 hours)
+- [ ] Build split-screen chat interface
+- [ ] Build live preview iframe
+- [ ] Implement edit modals (structured forms)
+- [ ] Add progress bar
+- [ ] Mobile responsive (tab/toggle)
+- [ ] Create intro video page
 
-### Phase 5: Integration & Testing (8 hours)
-- [ ] Integrate with signup flow
-- [ ] End-to-end testing (full onboarding)
-- [ ] Load testing (handle concurrent onboardings)
-- [ ] Error handling and retry logic
+### Phase 5: Edit Controls (6 hours)
+- [ ] Build editable field system
+- [ ] Create structured edit modals
+- [ ] Implement "Guest Will See" preview
+- [ ] Add "Regenerate" button for AI content
+- [ ] Lock guest-facing text
+
+### Phase 6: Integration & Polish (12 hours)
+- [ ] Integrate with F-001 models
+- [ ] Deploy Nora icon system-wide
 - [ ] Add analytics tracking
-- [ ] Documentation
+- [ ] End-to-end testing
+- [ ] Load testing
+- [ ] Deploy to Railway
+
+**Total Estimate: ~56 hours (7 days)**
 
 ---
 
-## ✅ Success Criteria
+## 16. Dependencies
 
-### Functional:
-- ✅ User completes onboarding in 10-12 minutes
-- ✅ Hotel is operational (can accept bookings)
-- ✅ All F-001 models created correctly
-- ✅ 95%+ data extraction accuracy
-- ✅ Graceful error handling
-- ✅ Mobile-responsive UI
+**MUST BE COMPLETE:**
+- ✅ F-001.1 (Organization model with multi-tenancy)
 
-### Technical:
-- ✅ GPT-4o integration working
-- ✅ Redis session management
-- ✅ <2 second response time per message
-- ✅ Bulk room creation (handles 200+ rooms)
-- ✅ Test coverage >85%
-
-### Business:
-- ✅ 90%+ completion rate
-- ✅ <$0.10 AI cost per onboarding
-- ✅ Zero support tickets for onboarding
-- ✅ Positive user feedback
-
----
-
-## 💰 Cost Analysis
-
-### Per Onboarding:
-```
-GPT-4o API calls: ~25 requests
-Tokens per onboarding: ~5,000 tokens
-Cost: $0.075 per hotel
-
-At scale:
-- 100 hotels/month: $7.50/month
-- 1,000 hotels/month: $75/month
-- 10,000 hotels/month: $750/month
-
-Revenue impact:
-- Each hotel = $999/month
-- AI cost = 0.0075% of revenue
-- Negligible vs. 10x better conversion
+**API Keys Required:**
+```bash
+OPENAI_API_KEY=sk-...
+ELEVENLABS_API_KEY=...  # OR use OpenAI Realtime
+GOOGLE_PLACES_API_KEY=...
+REPLICATE_API_TOKEN=...  # For FLUX
+REDIS_URL=redis://localhost:6379/0
 ```
 
-**Recommendation**: Don't optimize AI costs until 1,000+ hotels/month.
+---
+
+## 17. Risks & Mitigations
+
+### Risk 1: AI Extraction Errors
+**Impact**: Wrong data → bad guest experience
+**Mitigation**:
+- Always show preview before finalizing
+- User can edit everything
+- Validate all data
+- Manual review step
+
+### Risk 2: Voice Accuracy
+**Impact**: Frustrating UX
+**Mitigation**:
+- Text always available
+- Prompt to type if voice fails
+- Test with various accents
+- Clear error messages
+
+### Risk 3: OpenAI Downtime
+**Impact**: Can't complete onboarding
+**Mitigation**:
+- Save progress after each step
+- Can resume later
+- Retry logic with backoff
+- Monitor OpenAI status
+
+### Risk 4: Website Scraping Failure
+**Impact**: Can't extract data
+**Mitigation**:
+- Graceful fallback to manual Q&A
+- Google Places as backup
+- Don't rely 100% on scraping
+
+### Risk 5: Cost Overruns
+**Impact**: AI costs exceed revenue
+**Mitigation**:
+- Monitor spend with alerts
+- Rate limiting per user
+- Cache common responses
+- Switch to cheaper models if needed
 
 ---
 
-## 🚀 Post-MVP Enhancements (F-002.1)
+## 18. Business Impact
 
-### Phase 2 Features:
-1. **Voice Input** (Whisper API) - 8h
-   - Speak answers instead of typing
-   - Accessibility win
+### 18.1 Competitive Differentiation
 
-2. **Hybrid Conversation Mode** - 12h
-   - Accept long-form answers
-   - "Tell me about your hotel" → extracts everything
+**Primary**: 10x faster onboarding (6-12 months → 10 minutes)
 
-3. **Photo Upload & AI Description** - 10h
-   - Upload photos during onboarding
-   - AI generates descriptions
+**Market Position**:
+- Traditional PMS: Complex, slow, high friction
+- Stayfull: AI-first, instant value, delightful UX
 
-4. **Multi-Language Support** - 6h
-   - Onboarding in Spanish, French, etc.
-   - GPT-4o handles translation
+**Expected Outcomes**:
+- Viral word-of-mouth
+- 2.25x conversion (40% → 90%)
+- Lower CAC (less support)
+- Justifies premium pricing
+- Creates demo "wow moment"
 
-5. **Smart Defaults from Location** - 4h
-   - "Miami" → auto-fill timezone, currency
-   - Suggest room prices based on market
+### 18.2 Revenue Impact
 
----
+```
+Without Nora:
+- 100 signups/month
+- 40% complete = 40 hotels
+- $999/month × 40 = $39,960 MRR
 
-## 📝 Notes
+With Nora:
+- 100 signups/month
+- 90% complete = 90 hotels
+- $999/month × 90 = $89,910 MRR
 
-### Why GPT-4o?
-- Structured output mode (JSON)
-- Fast, reliable
-- Good at following instructions
-- Worth the cost for MVP
+Revenue Lift: +$49,950/month (+125%)
+Annual Impact: +$599,400
+```
 
-### Why Not Build Custom NLP?
-- Too much effort
-- Lower accuracy
-- Slower iteration
-- LLMs are better at this
+**ROI**:
+- Development: 56 hours × $100/hr = $5,600
+- Payback: First 5 customers
+- Break-even: Week 1
 
-### Why Guided Questions vs. Pure Conversation?
-- Reliability: Guided = 95%+ accuracy, Pure = 70%
-- User confidence: Clear what's being collected
-- Easier to debug and test
-- Can evolve to hybrid later
+### 18.3 Strategic Value
 
-### Integration with F-001:
-- Uses ALL F-001 models (Hotel, RoomType, Room, Staff)
-- Validates using F-001 model validators
-- Creates production-ready data
-- No shortcuts or temp data
+**This is THE killer feature** - what makes Stayfull unique.
+
+The 21 AI features are valuable, but Nora is what gets hotels through the door. Once they experience the 10-minute setup magic, they trust the platform with everything else.
+
+**Don't cut corners on UX. Make it delightful.**
 
 ---
 
-## 🎯 Ready for Development
+## 19. Future Enhancements (F-002.1+)
 
-**Estimated Effort**: 42 hours (~1 week)
-**Dependencies**: F-001.1 complete (Organization model)
-**Risk**: Low (well-understood tech stack)
-**Business Impact**: HIGH (killer feature)
+**Voice Improvements:**
+- Voice-only onboarding
+- Multiple voice options
+- Real-time voice (OpenAI Realtime)
+- Voice wake word ("Hey Nora")
 
-**Next**: Developer implements after F-001.1 ships.
+**Data Acceleration:**
+- Import from competitor PMS
+- Auto-sync with channel managers
+- OCR for paper documents
+- Real-time OTA syncing
+
+**Personalization:**
+- Learn user preferences
+- Adjust tone based on feedback
+- Remember frequent settings
+- Proactive suggestions
+
+**Advanced Features:**
+- Photo recognition (describe from image)
+- Video tour analysis
+- Competitor pricing alerts
+- Market demand predictions
 
 ---
 
-**Architect Approval**: ✅ APPROVED
-**User Approval**: ✅ APPROVED (All recommendations accepted)
+## 20. Appendix
+
+### 20.1 System Prompts
+
+```python
+NORA_SYSTEM_PROMPT = """
+You are Nora, an enthusiastic AI co-worker helping hotel owners
+set up and manage their properties on Stayfull.
+
+Personality:
+- Enthusiastic but professional
+- Clear and concise
+- Encouraging and supportive
+- Never robotic or corporate
+
+Communication Style:
+- Short messages (1-3 sentences)
+- One question at a time
+- Use ✓ for confirmations
+- Use emoji sparingly (💳 ❌ ✨)
+- "Great!" "Perfect!" "Got it!" for acknowledgments
+
+Your Job:
+- Guide users through 10-minute hotel setup
+- Extract maximum info from minimum input
+- Always show preview of guest-facing content
+- Help with any PMS operation they need
+
+Remember:
+- User controls DATA, you control PRESENTATION
+- Never let users edit AI-formatted guest text
+- Always validate business rules
+- Be proactive and helpful
+"""
+```
+
+### 20.2 Field Validation Rules
+
+See: `.architect/data/F-002_VALIDATION_RULES.json` (to be created)
+
+### 20.3 Stock Photo Library
+
+See: `.architect/data/F-002_STOCK_PHOTOS.csv` (to be created)
+
+---
+
+## Sign-Off
+
+**Architect**: ✅ Ready for User Review
+**User**: [Pending Approval]
+**Developer**: [Awaiting Handoff after F-001.1]
+
+**Next Steps**:
+1. ✅ User reviews this spec
+2. User approves or requests changes
+3. Architect finalizes
+4. Developer completes F-001.1
+5. Developer starts F-002 (56 hours)
+
+---
+
+**Last Updated**: 2025-10-23
+**Version**: 2.0 (Complete Rewrite After Discovery)
+**Status**: Ready for User Review

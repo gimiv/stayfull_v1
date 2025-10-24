@@ -297,3 +297,85 @@ Respond ONLY with valid JSON, no other text.
         defaults["detected_country"] = country
 
         return defaults
+
+    def infer_smart_defaults(self, country: str, state: str = None, city: str = None) -> Dict:
+        """
+        Infer currency, tax rate, language from location with state-level accuracy.
+
+        This is the enhanced version of infer_from_location() with:
+        - US state-specific hotel tax rates (all 50 states)
+        - More comprehensive country currency mappings
+        - Better defaults
+
+        Args:
+            country: Country name or code
+            state: State/province code (e.g., "FL", "CA") - optional
+            city: City name - optional
+
+        Returns:
+            {
+                "currency": "USD",
+                "tax_rate": 13.0,  # percentage (not decimal)
+                "language": "en"
+            }
+        """
+        # Currency mapping (20+ countries)
+        currency_map = {
+            'United States': 'USD', 'US': 'USD', 'USA': 'USD',
+            'Canada': 'CAD',
+            'United Kingdom': 'GBP', 'UK': 'GBP',
+            'France': 'EUR', 'Germany': 'EUR', 'Spain': 'EUR',
+            'Italy': 'EUR', 'Portugal': 'EUR', 'Netherlands': 'EUR',
+            'Belgium': 'EUR', 'Austria': 'EUR', 'Greece': 'EUR',
+            'Mexico': 'MXN',
+            'Australia': 'AUD',
+            'Japan': 'JPY',
+            'China': 'CNY',
+            'India': 'INR',
+            'Brazil': 'BRL',
+            'South Africa': 'ZAR',
+            'Switzerland': 'CHF',
+            'Sweden': 'SEK',
+            'Norway': 'NOK',
+            'Denmark': 'DKK',
+        }
+
+        # US state hotel tax rates (state + local average)
+        us_tax_rates = {
+            'AL': 10.0, 'AK': 5.0, 'AZ': 10.8, 'AR': 12.6, 'CA': 10.5,
+            'CO': 10.4, 'CT': 15.0, 'DE': 8.0, 'FL': 13.0, 'GA': 13.0,
+            'HI': 14.4, 'ID': 9.0, 'IL': 11.6, 'IN': 12.0, 'IA': 12.0,
+            'KS': 11.3, 'KY': 11.3, 'LA': 14.0, 'ME': 9.5, 'MD': 11.5,
+            'MA': 11.7, 'MI': 11.0, 'MN': 13.9, 'MS': 12.2, 'MO': 12.5,
+            'MT': 7.0, 'NE': 12.5, 'NV': 13.4, 'NH': 9.0, 'NJ': 13.6,
+            'NM': 12.9, 'NY': 14.8, 'NC': 12.8, 'ND': 12.0, 'OH': 14.5,
+            'OK': 13.5, 'OR': 11.5, 'PA': 11.4, 'RI': 13.0, 'SC': 12.1,
+            'SD': 10.0, 'TN': 15.3, 'TX': 17.0, 'UT': 12.3, 'VT': 10.0,
+            'VA': 10.8, 'WA': 15.6, 'WV': 12.0, 'WI': 13.4, 'WY': 10.0
+        }
+
+        # Normalize country for lookup
+        country_normalized = country
+        for key in currency_map.keys():
+            if key.lower() in country.lower():
+                country_normalized = key
+                break
+
+        currency = currency_map.get(country_normalized, 'USD')
+        tax_rate = 10.0  # Default
+
+        # US-specific: Use state tax rates
+        if country_normalized in ['US', 'USA', 'United States'] and state:
+            tax_rate = us_tax_rates.get(state.upper(), 10.0)
+        elif country_normalized == 'Canada':
+            tax_rate = 13.0  # HST average
+        elif country_normalized in ['United Kingdom', 'UK']:
+            tax_rate = 20.0  # VAT
+        elif country_normalized in ['France', 'Germany', 'Spain', 'Italy']:
+            tax_rate = 20.0  # VAT average
+
+        return {
+            "currency": currency,
+            "tax_rate": tax_rate,  # As percentage (13.0 = 13%)
+            "language": "en"  # Default English for MVP
+        }

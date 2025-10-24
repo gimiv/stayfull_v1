@@ -152,3 +152,8 @@ SPECTACULAR_SETTINGS = {
 
 # Field-level encryption key for custom EncryptedCharField
 FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY")
+
+# AI Agent API Keys
+OPENAI_API_KEY = env("OPENAI_API_KEY", default="")
+GOOGLE_PLACES_API_KEY = env("GOOGLE_PLACES_API_KEY", default="")
+PERPLEXITY_API_KEY = env("PERPLEXITY_API_KEY", default="")

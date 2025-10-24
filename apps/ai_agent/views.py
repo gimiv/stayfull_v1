@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponse, StreamingHttpResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
 import json
 
 from apps.ai_agent.services.nora_agent import NoraAgent
@@ -34,9 +35,14 @@ def chat_view(request):
     # Get context summary for debugging
     context_summary = agent.get_context_summary()
 
+    # Get Google Places API key from environment
+    import os
+    google_places_api_key = os.getenv("GOOGLE_PLACES_API_KEY", "")
+
     context = {
         "organization": organization,
         "context_summary": context_summary,
+        "GOOGLE_PLACES_API_KEY": google_places_api_key,
     }
 
     return render(request, "ai_agent/chat.html", context)
@@ -78,6 +84,24 @@ def send_message(request):
         # Initialize Nora and process message
         agent = NoraAgent(user=request.user, organization=organization)
         response = agent.process_message(user_message)
+
+        # Check if we should trigger Google Places search
+        # (when user provides hotel name + location in first interaction)
+        if (agent.context.active_task == "onboarding" and
+            response.get("action") == "show_extracted_data"):
+
+            # Extract hotel name and location from response data
+            extracted = response.get("data", {}).get("extracted", {})
+            hotel_name = extracted.get("hotel_name")
+            city = extracted.get("city")
+
+            # If we have both, trigger Google Places search
+            if hotel_name and city:
+                response["action"] = "trigger_google_places_search"
+                response["data"]["search_query"] = {
+                    "hotel_name": hotel_name,
+                    "location": city
+                }
 
         return JsonResponse(response)
 
@@ -121,6 +145,257 @@ def start_onboarding(request):
     except Exception as e:
         return JsonResponse(
             {"error": "Failed to start onboarding", "details": str(e)},
+            status=500
+        )
+
+
+@login_required
+@require_http_methods(["POST"])
+def process_hotel_search(request):
+    """
+    Process initial hotel search from Google Places + Perplexity research.
+
+    This endpoint is called immediately after Google Places finds the hotel.
+    It saves the data and calls Perplexity, then returns a conversational
+    address confirmation message.
+
+    Request body:
+        {
+            "hotel_name": str,
+            "full_address": str,
+            "city": str,
+            ... (all Google Places fields)
+        }
+
+    Response:
+        {
+            "address_message": "Got it, I have that address as...",
+            "perplexity_data": {...}
+        }
+    """
+    if not hasattr(request.user, "staff_positions") or not request.user.staff_positions.exists():
+        return JsonResponse({"error": "No organization associated with user"}, status=403)
+
+    staff = request.user.staff_positions.first()
+    organization = staff.organization
+
+    try:
+        import json
+        data = json.loads(request.body)
+
+        # Initialize Nora agent
+        agent = NoraAgent(user=request.user, organization=organization)
+        from apps.ai_agent.services.conversation_engine import OnboardingEngine
+        from apps.ai_agent.services.perplexity_service import PerplexityService
+
+        # Save Google Places data to task_state
+        update_data = {
+            "hotel_name": data.get("hotel_name"),
+            "full_address": data.get("full_address"),
+            "street_address": data.get("street_address"),
+            "city": data.get("city"),
+            "state": data.get("state"),
+            "state_code": data.get("state_code"),
+            "country": data.get("country"),
+            "country_code": data.get("country_code"),
+            "postal_code": data.get("postal_code"),
+            "latitude": data.get("latitude"),
+            "longitude": data.get("longitude"),
+            "phone": data.get("phone"),
+            "website": data.get("website"),
+            "google_place_id": data.get("google_place_id"),
+            "_awaiting_address_confirmation": True,  # Flag to track confirmation
+        }
+
+        # Auto-infer country if state is provided but country is not
+        if data.get("state") and not data.get("country"):
+            us_states = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY']
+            state_code = str(data.get("state_code", '')).upper()
+
+            if state_code in us_states:
+                update_data["country"] = "United States"
+                update_data["country_code"] = "US"
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.info(f"✅ Auto-inferred country: United States (from state: {state_code})")
+
+        agent.context.task_state.update(update_data)
+
+        # Call Perplexity for hotel research (in parallel conceptually)
+        perplexity = PerplexityService()
+        hotel_info = perplexity.get_hotel_information(
+            hotel_name=data.get("hotel_name"),
+            location=data.get("city")
+        )
+
+        # Store Perplexity data temporarily (will be confirmed later)
+        if "error" not in hotel_info:
+            agent.context.task_state["_perplexity_pending"] = hotel_info
+
+        agent.context.save()
+
+        # Log the action
+        agent.context.add_action("google_places_found", data)
+        if "error" not in hotel_info:
+            agent.context.add_action("perplexity_research_pending", hotel_info)
+
+        # Generate conversational address confirmation message
+        address_message = f"Got it! I found {data.get('hotel_name')} at {data.get('full_address')}. Is that correct?"
+
+        return JsonResponse({
+            "address_message": address_message,
+            "perplexity_data": hotel_info if "error" not in hotel_info else None
+        })
+
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error processing hotel search: {str(e)}", exc_info=True)
+        return JsonResponse(
+            {"error": "Failed to process hotel search", "details": str(e)},
+            status=500
+        )
+
+
+@login_required
+@require_http_methods(["POST"])
+def accept_hotel_details(request):
+    """
+    API endpoint to accept hotel details from Google Places.
+
+    Request body:
+        {
+            "hotel_name": str,
+            "full_address": str,
+            "street_address": str,
+            "city": str,
+            "state": str,
+            "state_code": str,
+            "country": str,
+            "country_code": str,
+            "postal_code": str,
+            "latitude": float,
+            "longitude": float,
+            "phone": str,
+            "website": str,
+            "google_place_id": str
+        }
+
+    Response:
+        {
+            "message": "Confirmation message",
+            "progress": int,
+            "state": str
+        }
+    """
+    # Get user's organization
+    if not hasattr(request.user, "staff_positions") or not request.user.staff_positions.exists():
+        return JsonResponse({"error": "No organization associated with user"}, status=403)
+
+    staff = request.user.staff_positions.first()
+    organization = staff.organization
+
+    try:
+        import json
+        data = json.loads(request.body)
+
+        # Initialize Nora agent
+        agent = NoraAgent(user=request.user, organization=organization)
+        from apps.ai_agent.services.conversation_engine import OnboardingEngine
+        from apps.ai_agent.services.perplexity_service import PerplexityService
+
+        # Update task_state with hotel details from Google Places
+        agent.context.task_state.update({
+            "hotel_name": data.get("hotel_name"),
+            "full_address": data.get("full_address"),
+            "street_address": data.get("street_address"),
+            "city": data.get("city"),
+            "state": data.get("state"),
+            "state_code": data.get("state_code"),
+            "country": data.get("country"),
+            "country_code": data.get("country_code"),
+            "postal_code": data.get("postal_code"),
+            "latitude": data.get("latitude"),
+            "longitude": data.get("longitude"),
+            "phone": data.get("phone"),
+            "website": data.get("website"),
+            "google_place_id": data.get("google_place_id"),
+        })
+
+        # Enrich with Perplexity AI research (web-grounded hotel information)
+        perplexity = PerplexityService()
+        hotel_info = perplexity.get_hotel_information(
+            hotel_name=data.get("hotel_name"),
+            location=data.get("city")
+        )
+
+        # Add Perplexity research to task_state (if successful)
+        if "error" not in hotel_info:
+            agent.context.task_state.update({
+                "general_info": hotel_info.get("general_info"),
+                "amenities": hotel_info.get("amenities", []),
+                "unique_features": hotel_info.get("unique_features"),
+                "target_audience": hotel_info.get("target_audience"),
+                "price_range": hotel_info.get("price_range"),
+                "hotel_style": hotel_info.get("hotel_style"),
+                "notable_facts": hotel_info.get("notable_facts"),
+            })
+
+        # Save updated context
+        agent.context.save()
+
+        # Log the action
+        agent.context.add_action("google_places_accepted", data)
+        if "error" not in hotel_info:
+            agent.context.add_action("perplexity_research_complete", hotel_info)
+
+        # Check what's still missing
+        engine = OnboardingEngine(agent.context.task_state)
+        missing = engine.get_missing_fields()
+
+        # Generate appropriate message based on what's missing
+        # Human-friendly field names
+        human_friendly = {
+            'contact_email': 'your email address',
+            'phone': 'a phone number',
+            'website': 'your website',
+            'state': 'the state/province',
+            'country': 'the country',
+            'full_address': 'the full address',
+        }
+
+        if missing and 'contact_email' in missing:
+            # Only ask for contact email if it's the only thing missing
+            if len(missing) == 1:
+                message = f"Perfect! I've saved all the details for {data.get('hotel_name')}. Last thing I need - what's the best email to reach you at?"
+                return JsonResponse({
+                    "message": message,
+                    "progress": 20,  # Almost done with hotel basics
+                    "state": "HOTEL_BASICS"
+                })
+            else:
+                # Multiple things missing, ask for them
+                missing_friendly = [human_friendly.get(field, field.replace('_', ' ')) for field in missing]
+                message = f"Great! I've got {data.get('hotel_name')}. I still need {', '.join(missing_friendly)}. Can you share those with me?"
+                return JsonResponse({
+                    "message": message,
+                    "progress": 15,
+                    "state": "HOTEL_BASICS"
+                })
+        else:
+            # Hotel basics complete! Move to room types
+            message = f"Perfect! I've got everything for {data.get('hotel_name')}. Now let's set up your room types. How many different types of rooms do you have?"
+            return JsonResponse({
+                "message": message,
+                "progress": 25,  # Hotel basics complete
+                "state": "ROOM_TYPES"
+            })
+
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+    except Exception as e:
+        return JsonResponse(
+            {"error": "Failed to save hotel details", "details": str(e)},
             status=500
         )
 
@@ -233,10 +508,15 @@ def generate_voice(request):
         if not audio_bytes:
             return JsonResponse({"error": "Voice generation failed"}, status=500)
 
-        # Return audio as response
-        response = HttpResponse(audio_bytes, content_type='audio/mpeg')
-        response['Content-Disposition'] = 'attachment; filename="nora_response.mp3"'
-        return response
+        # Return audio as base64-encoded JSON (for frontend playback)
+        import base64
+        audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
+
+        return JsonResponse({
+            "success": True,
+            "audio_base64": audio_base64,
+            "text": text
+        })
 
     except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON"}, status=400)
@@ -599,7 +879,7 @@ def get_progress(request):
 @require_http_methods(["POST"])
 def accept_field(request):
     """
-    User accepted Nora's suggestion - mark complete and move to next step.
+    User accepted a field value - mark as confirmed.
 
     Request body:
         {
@@ -621,10 +901,106 @@ def accept_field(request):
 
         # Update context
         agent = NoraAgent(user=request.user, organization=organization)
-        agent.context.task_state[field] = value
+
+        # Mark field as confirmed (add to metadata)
+        if not agent.context.task_state.get("_confirmed_fields"):
+            agent.context.task_state["_confirmed_fields"] = []
+
+        if field not in agent.context.task_state["_confirmed_fields"]:
+            agent.context.task_state["_confirmed_fields"].append(field)
+
         agent.context.save()
 
-        return JsonResponse({"success": True, "field": field, "value": value})
+        # Log the action
+        agent.context.add_action("field_accepted", {"field": field, "value": value})
+
+        # Human-friendly field names
+        human_friendly = {
+            'contact_email': 'email address',
+            'hotel_name': 'hotel name',
+            'city': 'city',
+            'state': 'state/province',
+            'country': 'country',
+            'phone': 'phone number',
+            'website': 'website',
+            'full_address': 'address',
+            'street_address': 'street address',
+        }
+
+        field_display = human_friendly.get(field, field.replace('_', ' '))
+
+        return JsonResponse({
+            "success": True,
+            "field": field,
+            "value": value,
+            "message": f"Perfect! I've confirmed your {field_display}."
+        })
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def update_field(request):
+    """
+    User modified a field value - update and save.
+
+    Request body:
+        {
+            "field": "hotel_name",
+            "value": "New Hotel Name"
+        }
+    """
+    # Get user's organization
+    if not hasattr(request.user, "staff_positions") or not request.user.staff_positions.exists():
+        return JsonResponse({"error": "No organization"}, status=403)
+
+    staff = request.user.staff_positions.first()
+    organization = staff.organization
+
+    try:
+        data = json.loads(request.body)
+        field = data.get("field")
+        value = data.get("value")
+
+        if not field or not value:
+            return JsonResponse({"error": "Missing field or value"}, status=400)
+
+        # Update context
+        agent = NoraAgent(user=request.user, organization=organization)
+
+        # Store old value for logging
+        old_value = agent.context.task_state.get(field)
+
+        # Update the field
+        agent.context.task_state[field] = value
+
+        # Mark field as confirmed
+        if not agent.context.task_state.get("_confirmed_fields"):
+            agent.context.task_state["_confirmed_fields"] = []
+
+        if field not in agent.context.task_state["_confirmed_fields"]:
+            agent.context.task_state["_confirmed_fields"].append(field)
+
+        agent.context.save()
+
+        # Log the action
+        agent.context.add_action("field_updated", {
+            "field": field,
+            "old_value": old_value,
+            "new_value": value
+        })
+
+        # Generate friendly field name
+        field_name = field.replace('_', ' ').title()
+
+        return JsonResponse({
+            "success": True,
+            "field": field,
+            "value": value,
+            "message": f"Great! I've updated your {field_name} to \"{value}\"."
+        })
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
@@ -682,10 +1058,18 @@ def complete_onboarding(request):
             }, status=500)
         
         hotel = result['hotel']
-        
+
+        # Mark onboarding as complete (clear task_state now that hotel is generated)
+        agent.context.task_state['hotel_id'] = str(hotel.id)
+        agent.context.task_state['onboarding_completed_at'] = timezone.now().isoformat()
+        agent.context.save()
+
+        # NOW clear the task (hotel is safely in database)
+        agent.context.complete_task()
+
         # Construct hotel URL (in production, would use actual domain)
         hotel_url = f"https://{hotel.slug}.stayfull.com"  # Placeholder
-        
+
         return JsonResponse({
             "success": True,
             "hotel_id": str(hotel.id),

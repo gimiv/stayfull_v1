@@ -74,8 +74,12 @@ class OnboardingEngine:
             'state': OnboardingState.HOTEL_BASICS,
             'steps': [
                 {'field': 'hotel_name', 'label': 'Hotel name'},
+                {'field': 'full_address', 'label': 'Address'},
                 {'field': 'city', 'label': 'City'},
+                {'field': 'state', 'label': 'State/Province'},
                 {'field': 'country', 'label': 'Country'},
+                {'field': 'phone', 'label': 'Phone'},
+                {'field': 'website', 'label': 'Website'},
                 {'field': 'contact_email', 'label': 'Contact email'},
             ],
             'weight': 25  # % of overall progress

@@ -11,6 +11,9 @@
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 
+    <!-- Google Maps JavaScript API with Places library -->
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_PLACES_API_KEY|default:'YOUR_API_KEY' }}&libraries=places&callback=initGooglePlaces" async defer></script>
+
     <!-- Custom styles -->
     <style>
         /* Stripe-inspired design system */
@@ -96,8 +99,13 @@
             <!-- Header -->
             <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
                 <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-500 flex items-center justify-center text-white font-bold">
-                        N
+                    {% load static %}
+                    <div class="w-10 h-10 rounded-full overflow-hidden shadow-lg border-2 border-blue-200">
+                        <img
+                            src="{% static 'ai_agent/images/nora-avatar.png' %}"
+                            alt="Nora"
+                            class="w-full h-full object-cover"
+                        />
                     </div>
                     <div>
                         <h1 class="text-lg font-semibold text-gray-900">Nora</h1>
@@ -105,13 +113,45 @@
                     </div>
                 </div>
 
-                <!-- Mobile tab toggle -->
-                <button
-                    onclick="togglePreview()"
-                    class="md:hidden px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-                >
-                    Preview
-                </button>
+                <!-- Voice Controls -->
+                <div class="flex items-center space-x-2">
+                    <!-- Mute/Unmute Button -->
+                    <button
+                        id="mute-btn"
+                        onclick="toggleMute()"
+                        class="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                        title="Mute Nora's voice"
+                    >
+                        <svg id="unmuted-icon" class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                        </svg>
+                        <svg id="muted-icon" class="hidden w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+                        </svg>
+                    </button>
+
+                    <!-- Speak to Nora Button -->
+                    <button
+                        id="header-voice-btn"
+                        onclick="toggleVoiceRecording()"
+                        class="relative flex items-center px-3 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium rounded-lg transition-all text-sm"
+                        title="Voice input"
+                    >
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                        </svg>
+                        <span id="header-voice-btn-text">Speak</span>
+                        <div class="pulse-ring absolute inset-0 rounded-lg bg-red-400 opacity-0"></div>
+                    </button>
+
+                    <!-- Mobile tab toggle -->
+                    <button
+                        onclick="togglePreview()"
+                        class="md:hidden px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                    >
+                        Preview
+                    </button>
+                </div>
             </div>
 
             <!-- Progress Bar (shown during onboarding) -->
@@ -146,21 +186,6 @@
                             onkeydown="handleKeyPress(event)"
                         ></textarea>
                     </div>
-
-                    <!-- Voice Button -->
-                    <button
-                        type="button"
-                        id="voice-btn"
-                        onclick="toggleVoiceRecording()"
-                        class="relative flex items-center justify-center px-4 h-12 bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium rounded-lg transition-all duration-200"
-                        title="Voice input"
-                    >
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
-                        </svg>
-                        <span id="voice-btn-text">Speak to Nora</span>
-                        <div class="pulse-ring absolute inset-0 rounded-lg bg-red-400 opacity-0"></div>
-                    </button>
 
                     <!-- Send Button -->
                     <button
@@ -229,6 +254,8 @@
         let mediaRecorder = null;
         let audioChunks = [];
         let isRecording = false;
+        let isMuted = false; // Global mute state (default: unmuted, Nora speaks)
+        let userHasInteracted = false; // Track if user has interacted with page
 
         // Send text message
         async function sendMessage(event) {
@@ -266,6 +293,9 @@
 
                 // Add Nora's response
                 addMessage('assistant', data.message);
+
+                // Auto-play Nora's voice
+                await playNoraVoice(data.message);
 
                 // Update progress if present
                 if (data.data && data.data.progress !== undefined) {
@@ -367,6 +397,19 @@
                 setTimeout(() => {
                     alert('🎉 Your hotel is ready!');
                 }, 500);
+            } else if (action === 'trigger_google_places_search') {
+                // Automatically search Google Places and show results
+                const searchQuery = data.search_query;
+                if (searchQuery) {
+                    setTimeout(async () => {
+                        const place = await searchHotelOnGoogle(searchQuery.hotel_name, searchQuery.location);
+                        if (place) {
+                            displayHotelPreview(place);
+                        } else {
+                            console.warn('No Google Places results found');
+                        }
+                    }, 500); // Small delay for better UX
+                }
             }
         }
 
@@ -381,34 +424,80 @@
 
         async function startRecording() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                // Check if browser supports getUserMedia
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    alert('Your browser does not support voice recording. Please use a modern browser like Chrome, Firefox, or Safari.');
+                    return;
+                }
+
+                console.log('Requesting microphone access...');
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        sampleRate: 44100
+                    }
+                });
+                console.log('Microphone access granted!', stream);
+
+                // Check if MediaRecorder is supported
+                if (!window.MediaRecorder) {
+                    alert('Your browser does not support audio recording.');
+                    stream.getTracks().forEach(track => track.stop());
+                    return;
+                }
+
                 mediaRecorder = new MediaRecorder(stream);
                 audioChunks = [];
+                console.log('MediaRecorder created:', mediaRecorder.state);
 
                 mediaRecorder.ondataavailable = (event) => {
+                    console.log('Audio data available:', event.data.size, 'bytes');
                     audioChunks.push(event.data);
                 };
 
                 mediaRecorder.onstop = async () => {
+                    console.log('Recording stopped, processing audio chunks:', audioChunks.length);
                     const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    console.log('Audio blob created:', audioBlob.size, 'bytes');
                     await sendVoiceMessage(audioBlob);
+                };
+
+                mediaRecorder.onerror = (event) => {
+                    console.error('MediaRecorder error:', event.error);
+                    alert('Recording error: ' + event.error);
                 };
 
                 mediaRecorder.start();
                 isRecording = true;
+                console.log('Recording started, state:', mediaRecorder.state);
 
-                // Update UI
-                const voiceBtn = document.getElementById('voice-btn');
-                const voiceBtnText = document.getElementById('voice-btn-text');
+                // Update UI (header button)
+                const voiceBtn = document.getElementById('header-voice-btn');
+                const voiceBtnText = document.getElementById('header-voice-btn-text');
 
                 voiceBtn.classList.add('recording', 'bg-red-500', 'hover:bg-red-600', 'text-white');
                 voiceBtn.classList.remove('bg-blue-100', 'hover:bg-blue-200', 'text-blue-700');
-                voiceBtnText.textContent = 'Stop Recording';
+                voiceBtnText.textContent = 'Stop';
                 document.getElementById('recording-indicator').classList.remove('hidden');
 
             } catch (error) {
                 console.error('Error accessing microphone:', error);
-                alert('Could not access microphone. Please check permissions.');
+                console.error('Error name:', error.name);
+                console.error('Error message:', error.message);
+
+                let errorMessage = 'Could not access microphone. ';
+                if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                    errorMessage += 'Please allow microphone access in your browser settings.';
+                } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+                    errorMessage += 'No microphone found. Please connect a microphone and try again.';
+                } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+                    errorMessage += 'Your microphone is being used by another application.';
+                } else {
+                    errorMessage += error.message;
+                }
+
+                alert(errorMessage);
             }
         }
 
@@ -418,13 +507,13 @@
                 mediaRecorder.stream.getTracks().forEach(track => track.stop());
                 isRecording = false;
 
-                // Update UI
-                const voiceBtn = document.getElementById('voice-btn');
-                const voiceBtnText = document.getElementById('voice-btn-text');
+                // Update UI (header button)
+                const voiceBtn = document.getElementById('header-voice-btn');
+                const voiceBtnText = document.getElementById('header-voice-btn-text');
 
                 voiceBtn.classList.remove('recording', 'bg-red-500', 'hover:bg-red-600', 'text-white');
                 voiceBtn.classList.add('bg-blue-100', 'hover:bg-blue-200', 'text-blue-700');
-                voiceBtnText.textContent = 'Speak to Nora';
+                voiceBtnText.textContent = 'Speak';
                 document.getElementById('recording-indicator').classList.add('hidden');
             }
         }
@@ -455,9 +544,13 @@
                 addMessage('assistant', data.message);
 
                 // Play audio response
-                if (data.audio_base64) {
+                if (data.audio_base64 && !isMuted) {
                     const audio = new Audio('data:audio/mp3;base64,' + data.audio_base64);
-                    audio.play();
+                    try {
+                        await audio.play();
+                    } catch (e) {
+                        console.log('Autoplay prevented');
+                    }
                 }
 
                 // Handle progress/actions
@@ -476,6 +569,29 @@
         function togglePreview() {
             const preview = document.getElementById('preview-panel');
             preview.classList.toggle('hidden');
+        }
+
+        // Toggle mute/unmute
+        function toggleMute() {
+            isMuted = !isMuted;
+
+            const mutedIcon = document.getElementById('muted-icon');
+            const unmutedIcon = document.getElementById('unmuted-icon');
+            const muteBtn = document.getElementById('mute-btn');
+
+            if (isMuted) {
+                // Show muted icon
+                mutedIcon.classList.remove('hidden');
+                unmutedIcon.classList.add('hidden');
+                muteBtn.title = "Unmute Nora's voice";
+                console.log('🔇 Nora is muted');
+            } else {
+                // Show unmuted icon
+                mutedIcon.classList.add('hidden');
+                unmutedIcon.classList.remove('hidden');
+                muteBtn.title = "Mute Nora's voice";
+                console.log('🔊 Nora is unmuted');
+            }
         }
 
         // Auto-resize textarea
@@ -632,6 +748,608 @@
                     </div>
                 </div>
             `;
+        }
+
+        // Auto-start conversation with Nora's greeting (with audio)
+        async function initializeConversation() {
+            const messagesDiv = document.getElementById('messages');
+
+            // Check if there are already messages (user has started chatting)
+            const existingMessages = messagesDiv.querySelectorAll('.message-enter');
+            if (existingMessages.length > 1) {
+                // Conversation already started, don't auto-init
+                return;
+            }
+
+            try {
+                // Call start onboarding
+                const response = await fetch('/nora/api/start-onboarding/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // Add Nora's greeting message
+                    addMessage('assistant', data.message);
+
+                    // Auto-play audio for the greeting (will silently fail until user interacts)
+                    await playNoraVoice(data.message);
+
+                } else {
+                    console.error('Failed to start onboarding');
+                }
+            } catch (error) {
+                console.error('Error initializing conversation:', error);
+            }
+        }
+
+        // Generate and play Nora's voice (default ON)
+        async function playNoraVoice(text) {
+            // Skip if muted
+            if (isMuted) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/nora/api/voice/generate/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // Create audio from base64
+                    const audio = new Audio('data:audio/mp3;base64,' + data.audio_base64);
+
+                    // Try to play - browsers may block autoplay before user interaction
+                    try {
+                        await audio.play();
+                    } catch (autoplayError) {
+                        // Autoplay was prevented (expected on first load)
+                        console.log('Autoplay prevented - waiting for user interaction');
+
+                        // Don't show error to user - it's normal browser behavior
+                        // Audio will work after they click/type anything
+                    }
+                } else {
+                    console.log('Voice generation not available');
+                }
+            } catch (error) {
+                console.error('Error generating voice:', error);
+                // Silent fail - text message is already shown
+            }
+        }
+
+        // Track user interaction for autoplay
+        function markUserInteraction() {
+            userHasInteracted = true;
+            console.log('User interaction detected - audio autoplay enabled');
+        }
+
+        // Listen for any user interaction
+        document.addEventListener('click', markUserInteraction, { once: true });
+        document.addEventListener('keydown', markUserInteraction, { once: true });
+        document.addEventListener('touchstart', markUserInteraction, { once: true });
+
+        // Initialize conversation when page loads
+        window.addEventListener('load', () => {
+            setTimeout(initializeConversation, 500); // Small delay to let page fully render
+        });
+
+        // ========================================
+        // Accept/Modify Field Functions
+        // ========================================
+
+        // Accept a field value
+        async function acceptField(field, value) {
+            try {
+                const response = await fetch('/nora/api/accept-field/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ field: field, value: value })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // Show success feedback
+                    const fieldDiv = document.getElementById('field-' + field);
+                    if (fieldDiv) {
+                        fieldDiv.innerHTML = `
+                            <div class="flex items-center space-x-2">
+                                <p class="text-sm text-gray-900 font-medium">${value}</p>
+                                <span class="text-xs text-green-600 font-medium">✓ Accepted</span>
+                            </div>
+                        `;
+                    }
+
+                    // Trigger HTMX refresh of progress tracker
+                    htmx.trigger('#progress-tracker', 'load');
+                } else {
+                    alert('Failed to accept field. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error accepting field:', error);
+                alert('An error occurred. Please try again.');
+            }
+        }
+
+        // Modify a field value (inline editing)
+        async function modifyField(field, label, currentValue) {
+            const fieldDiv = document.getElementById('field-' + field);
+            if (!fieldDiv) return;
+
+            // Replace with inline edit form
+            fieldDiv.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <input
+                        type="text"
+                        id="edit-${field}"
+                        value="${currentValue || ''}"
+                        class="flex-1 px-2 py-1 text-sm border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter ${label.toLowerCase()}"
+                    />
+                    <button
+                        onclick="saveField('${field}', '${label}')"
+                        class="px-2 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+                    >
+                        Save
+                    </button>
+                    <button
+                        onclick="cancelEdit('${field}', '${currentValue || ''}')"
+                        class="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            `;
+
+            // Focus the input
+            document.getElementById('edit-' + field).focus();
+        }
+
+        // Save edited field value
+        async function saveField(field, label) {
+            const input = document.getElementById('edit-' + field);
+            if (!input) return;
+
+            const newValue = input.value.trim();
+
+            if (!newValue) {
+                alert(`Please enter a ${label.toLowerCase()}`);
+                return;
+            }
+
+            try {
+                const response = await fetch('/nora/api/update-field/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ field: field, value: newValue })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // Update display
+                    const fieldDiv = document.getElementById('field-' + field);
+                    if (fieldDiv) {
+                        fieldDiv.innerHTML = `
+                            <div class="flex items-center space-x-2">
+                                <p class="text-sm text-gray-900 font-medium">${newValue}</p>
+                                <span class="text-xs text-green-600 font-medium">✓ Updated</span>
+                            </div>
+                        `;
+                    }
+
+                    // Add message to chat
+                    addMessage('assistant', data.message || `Great! I've updated your ${label.toLowerCase()} to "${newValue}".`);
+
+                    // Trigger HTMX refresh
+                    htmx.trigger('#progress-tracker', 'load');
+                } else {
+                    alert('Failed to update field. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error saving field:', error);
+                alert('An error occurred. Please try again.');
+            }
+        }
+
+        // Cancel inline edit
+        function cancelEdit(field, originalValue) {
+            const fieldDiv = document.getElementById('field-' + field);
+            if (fieldDiv) {
+                fieldDiv.innerHTML = `<p class="text-sm text-gray-900 font-medium">${originalValue || '—'}</p>`;
+            }
+        }
+
+        // ========================================
+        // Google Places API Integration
+        // ========================================
+
+        let googlePlacesReady = false;
+        let placesService = null;
+        let currentPlaceResult = null;
+
+        // Initialize Google Places (callback from API script)
+        function initGooglePlaces() {
+            console.log('Google Places API loaded');
+            googlePlacesReady = true;
+
+            // Create a dummy div for PlacesService (it requires a map or div)
+            const dummyDiv = document.createElement('div');
+            placesService = new google.maps.places.PlacesService(dummyDiv);
+        }
+
+        // Search for hotel using Google Places Text Search
+        async function searchHotelOnGoogle(hotelName, location = '') {
+            if (!googlePlacesReady || !placesService) {
+                console.warn('Google Places API not ready yet');
+                return null;
+            }
+
+            return new Promise((resolve, reject) => {
+                const query = location ? `${hotelName} ${location}` : hotelName;
+                console.log('Searching Google Places for:', query);
+
+                const request = {
+                    query: query,
+                    type: ['lodging'], // Filter to hotels/lodging
+                };
+
+                placesService.textSearch(request, (results, status) => {
+                    if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
+                        console.log('Found', results.length, 'results');
+                        // Get detailed info for the first result
+                        getPlaceDetails(results[0].place_id, resolve, reject);
+                    } else {
+                        console.warn('No results found or error:', status);
+                        resolve(null);
+                    }
+                });
+            });
+        }
+
+        // Get detailed information about a place
+        function getPlaceDetails(placeId, resolve, reject) {
+            const request = {
+                placeId: placeId,
+                fields: ['name', 'formatted_address', 'address_components', 'geometry', 'formatted_phone_number', 'website', 'rating', 'photos', 'types']
+            };
+
+            placesService.getDetails(request, (place, status) => {
+                if (status === google.maps.places.PlacesServiceStatus.OK) {
+                    console.log('Place details:', place);
+                    resolve(place);
+                } else {
+                    console.warn('Failed to get place details:', status);
+                    reject(status);
+                }
+            });
+        }
+
+        // Extract structured address data from Google Place
+        function extractAddressComponents(place) {
+            const components = {};
+
+            if (place.address_components) {
+                place.address_components.forEach(component => {
+                    const types = component.types;
+
+                    if (types.includes('street_number')) {
+                        components.street_number = component.long_name;
+                    } else if (types.includes('route')) {
+                        components.street = component.long_name;
+                    } else if (types.includes('locality')) {
+                        components.city = component.long_name;
+                    } else if (types.includes('administrative_area_level_1')) {
+                        components.state = component.long_name;
+                        components.state_code = component.short_name;
+                    } else if (types.includes('country')) {
+                        components.country = component.long_name;
+                        components.country_code = component.short_name;
+                    } else if (types.includes('postal_code')) {
+                        components.postal_code = component.long_name;
+                    }
+                });
+            }
+
+            // Build full address
+            const addressParts = [];
+            if (components.street_number && components.street) {
+                addressParts.push(`${components.street_number} ${components.street}`);
+            } else if (components.street) {
+                addressParts.push(components.street);
+            }
+
+            return {
+                ...components,
+                street_address: addressParts.join(', '),
+                full_address: place.formatted_address,
+                latitude: place.geometry?.location?.lat(),
+                longitude: place.geometry?.location?.lng(),
+            };
+        }
+
+        // Display hotel preview in the right panel AND send to backend for Perplexity research
+        async function displayHotelPreview(place) {
+            currentPlaceResult = place;
+            const addressData = extractAddressComponents(place);
+
+            // Prepare hotel data
+            const hotelData = {
+                hotel_name: place.name,
+                full_address: addressData.full_address,
+                street_address: addressData.street_address,
+                city: addressData.city,
+                state: addressData.state,
+                state_code: addressData.state_code,
+                country: addressData.country,
+                country_code: addressData.country_code,
+                postal_code: addressData.postal_code,
+                latitude: addressData.latitude,
+                longitude: addressData.longitude,
+                phone: place.formatted_phone_number,
+                website: place.website,
+                google_place_id: place.place_id,
+            };
+
+            // Send to backend to get Perplexity data and save
+            try {
+                const response = await fetch('/nora/api/process-hotel-search/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify(hotelData)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // Add Nora's address confirmation message
+                    addMessage('assistant', data.address_message);
+
+                    // Auto-play voice
+                    await playNoraVoice(data.address_message);
+
+                    // Store Perplexity data for later
+                    window.perplexityData = data.perplexity_data;
+                }
+            } catch (error) {
+                console.error('Error processing hotel search:', error);
+            }
+
+            // Get photo URL if available
+            let photoUrl = '';
+            if (place.photos && place.photos.length > 0) {
+                photoUrl = place.photos[0].getUrl({ maxWidth: 600, maxHeight: 400 });
+            }
+
+            // Build preview HTML
+            const previewHTML = `
+                <div class="p-6 space-y-6">
+                    <!-- Header -->
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-6 text-white">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                            </svg>
+                            <span class="text-sm font-medium">Found on Google Places</span>
+                        </div>
+                        <h3 class="text-2xl font-bold">${place.name}</h3>
+                        ${place.rating ? `
+                            <div class="flex items-center space-x-2 mt-2">
+                                <div class="flex items-center">
+                                    ${'★'.repeat(Math.floor(place.rating))}${'☆'.repeat(5 - Math.floor(place.rating))}
+                                </div>
+                                <span class="text-sm">${place.rating} rating</span>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    ${photoUrl ? `
+                        <!-- Photo -->
+                        <div class="rounded-lg overflow-hidden shadow-lg">
+                            <img src="${photoUrl}" alt="${place.name}" class="w-full h-64 object-cover" />
+                        </div>
+                    ` : ''}
+
+                    <!-- Address Details -->
+                    <div class="bg-white rounded-lg border-2 border-blue-100 p-6 space-y-4">
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4">Address Details</h4>
+
+                        <div class="space-y-3">
+                            <div class="flex items-start space-x-3">
+                                <svg class="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Full Address</p>
+                                    <p class="text-gray-900">${addressData.full_address}</p>
+                                </div>
+                            </div>
+
+                            ${addressData.city ? `
+                                <div class="flex items-start space-x-3">
+                                    <svg class="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                    </svg>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-600">City</p>
+                                        <p class="text-gray-900">${addressData.city}${addressData.state ? ', ' + addressData.state_code : ''}</p>
+                                    </div>
+                                </div>
+                            ` : ''}
+
+                            ${addressData.country ? `
+                                <div class="flex items-start space-x-3">
+                                    <svg class="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-600">Country</p>
+                                        <p class="text-gray-900">${addressData.country}</p>
+                                    </div>
+                                </div>
+                            ` : ''}
+
+                            ${place.formatted_phone_number ? `
+                                <div class="flex items-start space-x-3">
+                                    <svg class="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                                    </svg>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-600">Phone</p>
+                                        <p class="text-gray-900">${place.formatted_phone_number}</p>
+                                    </div>
+                                </div>
+                            ` : ''}
+
+                            ${place.website ? `
+                                <div class="flex items-start space-x-3">
+                                    <svg class="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
+                                    </svg>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-600">Website</p>
+                                        <a href="${place.website}" target="_blank" class="text-blue-600 hover:text-blue-700 underline break-all">${place.website}</a>
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    <!-- Accept Button -->
+                    <div class="flex space-x-3">
+                        <button
+                            onclick="acceptHotelDetails()"
+                            class="flex-1 px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-xl transition-all transform hover:scale-105 shadow-lg"
+                        >
+                            <div class="flex items-center justify-center space-x-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                <span>Accept & Continue</span>
+                            </div>
+                        </button>
+                        <button
+                            onclick="clearHotelPreview()"
+                            class="px-6 py-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-all"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // Update preview content
+            document.getElementById('preview-content').innerHTML = previewHTML;
+        }
+
+        // Accept hotel details and send to backend
+        async function acceptHotelDetails() {
+            if (!currentPlaceResult) return;
+
+            const addressData = extractAddressComponents(currentPlaceResult);
+
+            // Prepare hotel data
+            const hotelData = {
+                hotel_name: currentPlaceResult.name,
+                full_address: addressData.full_address,
+                street_address: addressData.street_address,
+                city: addressData.city,
+                state: addressData.state,
+                state_code: addressData.state_code,
+                country: addressData.country,
+                country_code: addressData.country_code,
+                postal_code: addressData.postal_code,
+                latitude: addressData.latitude,
+                longitude: addressData.longitude,
+                phone: currentPlaceResult.formatted_phone_number,
+                website: currentPlaceResult.website,
+                google_place_id: currentPlaceResult.place_id,
+            };
+
+            console.log('Accepting hotel data:', hotelData);
+
+            try {
+                // Send to backend to update Nora context
+                const response = await fetch('/nora/api/accept-hotel-details/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify(hotelData)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // Add confirmation message to chat
+                    addMessage('assistant', data.message || "Perfect! I've saved your hotel details. Let's continue setting up your rooms.");
+
+                    // Clear preview
+                    clearHotelPreview();
+
+                    // Update progress if available
+                    if (data.progress) {
+                        updateProgress(data.progress, data.state);
+                    }
+                } else {
+                    alert('Failed to save hotel details. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error accepting hotel details:', error);
+                alert('An error occurred. Please try again.');
+            }
+        }
+
+        // Clear hotel preview
+        function clearHotelPreview() {
+            currentPlaceResult = null;
+
+            // Restore progress tracker
+            document.getElementById('preview-content').innerHTML = `
+                <div
+                    id="progress-tracker"
+                    hx-get="/nora/api/progress/"
+                    hx-trigger="load, every 3s"
+                    hx-swap="innerHTML"
+                >
+                    <div class="p-6">
+                        <div class="text-center text-gray-400 py-12">
+                            <svg class="w-12 h-12 mx-auto mb-4 text-gray-300 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                            <p class="text-sm">Loading progress...</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Re-initialize HTMX for the progress tracker
+            htmx.process(document.getElementById('preview-content'));
         }
     </script>
 </body>
