@@ -135,6 +135,206 @@ Focus on factual, current information. If you can't find specific information, u
             logger.error(f"❌ Perplexity API error: {str(e)}", exc_info=True)
             return {"error": str(e)}
 
+    def research_hotel(
+        self,
+        hotel_name: str,
+        city: str,
+        state: str = None
+    ) -> Dict:
+        """
+        Comprehensive hotel research for F-002.3 AI-First Onboarding.
+
+        This is the primary method for auto-discovery of hotel data.
+
+        Args:
+            hotel_name: Hotel name (e.g., "Inn 32")
+            city: City (e.g., "Woodstock")
+            state: State code (e.g., "NH")
+
+        Returns:
+            {
+                "description": "Full 2-3 paragraph hotel description",
+                "amenities": ["WiFi", "Pool", "Parking", ...],
+                "room_types": [
+                    {
+                        "name": "Standard Queen",
+                        "beds": "1 Queen",
+                        "capacity": 2,
+                        "description": "Basic room description"
+                    },
+                    ...
+                ],
+                "website": "https://...",
+                "address": "Full street address",
+                "phone": "(603) 555-1234",
+                "total_rooms": 17,
+                "check_in_time": "3:00 PM",
+                "check_out_time": "11:00 AM",
+                "policies": {
+                    "cancellation": "...",
+                    "payment": "..."
+                },
+                "confidence": 0.85,
+                "_source": "perplexity"
+            }
+        """
+        if not self.client:
+            logger.warning("Perplexity client not initialized")
+            return {"error": "Perplexity API not configured", "confidence": 0.0}
+
+        try:
+            # Build location string
+            location = f"{city}, {state}" if state else city
+            query = f"{hotel_name} in {location}"
+
+            # Comprehensive research prompt
+            prompt = f"""Research the hotel "{hotel_name}" in {location} and provide COMPLETE information.
+
+Search the web thoroughly and extract:
+
+1. **Description**: Write a detailed 2-3 paragraph description covering:
+   - Hotel style and atmosphere
+   - Location advantages
+   - Target audience
+   - What makes it special
+
+2. **Room Types**: List ALL room categories with:
+   - Exact room type name (e.g., "Standard Queen", "Deluxe King")
+   - Bed configuration (e.g., "1 Queen", "2 Twins", "1 King")
+   - Maximum capacity (number of guests)
+   - Brief description of the room
+
+3. **Amenities**: Complete list including:
+   - Property amenities (pool, gym, spa, restaurant, bar, parking)
+   - Room amenities (WiFi, TV, coffee maker)
+   - Services (breakfast, room service, concierge)
+
+4. **Contact & Logistics**:
+   - Full street address with zip code
+   - Phone number
+   - Website URL
+   - Total number of rooms/units
+   - Check-in time
+   - Check-out time
+
+5. **Policies**:
+   - Cancellation policy
+   - Payment policy
+   - Pet policy (if applicable)
+
+Respond in this EXACT JSON format:
+{{
+  "description": "Multi-paragraph description...",
+  "amenities": ["WiFi", "Pool", "Parking", "Restaurant", ...],
+  "room_types": [
+    {{
+      "name": "Standard Queen",
+      "beds": "1 Queen",
+      "capacity": 2,
+      "description": "Cozy room with..."
+    }}
+  ],
+  "website": "https://...",
+  "address": "123 Main St, City, ST 12345",
+  "phone": "(xxx) xxx-xxxx",
+  "total_rooms": 17,
+  "check_in_time": "3:00 PM",
+  "check_out_time": "11:00 AM",
+  "policies": {{
+    "cancellation": "...",
+    "payment": "..."
+  }}
+}}
+
+IMPORTANT: Use null for fields you cannot find. Be thorough - search multiple sources."""
+
+            logger.info(f"🔍 Comprehensive research: {query}")
+
+            # Call Perplexity with sonar model
+            response = self.client.chat.completions.create(
+                model="sonar",  # Web-grounded search
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a hotel research specialist. Search the web thoroughly and provide accurate, comprehensive information in JSON format."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                temperature=0.1,  # Very low for factual data
+                max_tokens=2500
+            )
+
+            # Parse response
+            content = response.choices[0].message.content.strip()
+
+            # Remove markdown code fences
+            if content.startswith('```json'):
+                content = content[7:]
+            elif content.startswith('```'):
+                content = content[3:]
+            if content.endswith('```'):
+                content = content[:-3]
+
+            content = content.strip()
+            result = json.loads(content)
+
+            # Calculate confidence based on data completeness
+            confidence = self._calculate_confidence(result)
+            result['confidence'] = confidence
+            result['_source'] = 'perplexity'
+
+            # Log results
+            amenities = result.get('amenities') or []
+            room_types = result.get('room_types') or []
+
+            logger.info(f"✅ Perplexity research complete:")
+            logger.info(f"   Hotel: {hotel_name}")
+            logger.info(f"   Address: {result.get('address', 'NOT FOUND')}")
+            logger.info(f"   Amenities: {len(amenities)} found")
+            logger.info(f"   Room types: {len(room_types)} found")
+            logger.info(f"   Confidence: {confidence:.0%}")
+
+            return result
+
+        except json.JSONDecodeError as e:
+            logger.error(f"❌ JSON parse error: {str(e)}")
+            if 'response' in locals():
+                logger.error(f"   Raw: {response.choices[0].message.content[:200]}")
+            return {"error": "Failed to parse response", "confidence": 0.0}
+
+        except Exception as e:
+            logger.error(f"❌ Perplexity research failed: {str(e)}", exc_info=True)
+            return {"error": str(e), "confidence": 0.0}
+
+    def _calculate_confidence(self, data: Dict) -> float:
+        """
+        Calculate confidence score based on data completeness.
+
+        Returns 0.0 to 1.0
+        """
+        score = 0.0
+
+        # Critical fields (30 points each)
+        if data.get('address'):
+            score += 0.30
+        if data.get('room_types') and len(data['room_types']) > 0:
+            score += 0.30
+
+        # Important fields (10 points each)
+        if data.get('description') and len(data['description']) > 50:
+            score += 0.10
+        if data.get('amenities') and len(data['amenities']) > 3:
+            score += 0.10
+        if data.get('website'):
+            score += 0.10
+        if data.get('phone'):
+            score += 0.10
+
+        return min(score, 1.0)
+
     def get_hotel_description(
         self,
         hotel_name: str,
