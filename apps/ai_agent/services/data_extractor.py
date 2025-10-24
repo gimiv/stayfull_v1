@@ -10,12 +10,15 @@ IMPORTANT: Only scrapes user's own website (ethical boundary)
 """
 
 import requests
+import logging
 from bs4 import BeautifulSoup
 from typing import Dict, Optional
 import re
 from urllib.parse import urlparse
 
 from .openai_config import get_openai_client, GPT4O_CONFIG
+
+logger = logging.getLogger(__name__)
 
 
 class DataExtractor:
@@ -32,53 +35,65 @@ class DataExtractor:
 
     def extract_from_website(self, url: str) -> Dict:
         """
-        Extract hotel data from website URL.
+        Extract hotel data from website URL with comprehensive error handling.
 
         Args:
             url: Hotel website URL (user's own website)
 
         Returns:
-            Dict with extracted data:
-            {
-                "hotel_name": str,
-                "address": str,
-                "city": str,
-                "country": str,
-                "zip_code": str,
-                "phone": str,
-                "email": str,
-                "description": str,
-                "amenities": list,
-                "room_types": list,  # Basic room type names
-                "confidence": float,  # 0-1, extraction confidence
-                "raw_text": str,  # For debugging
-            }
+            Dict with extracted data OR {"error": "reason", "confidence": 0.0}
         """
+        logger.info(f"Starting website extraction: {url}")
+
         try:
             # Step 1: Fetch and parse HTML
             html_content = self._fetch_html(url)
             if not html_content:
-                return {"error": "Could not fetch website", "confidence": 0.0}
+                logger.warning(f"Failed to fetch HTML from {url}")
+                return {"error": "Could not access website", "confidence": 0.0}
+
+            logger.info(f"Successfully fetched HTML ({len(html_content)} chars)")
 
             # Step 2: Extract clean text
             clean_text = self._extract_clean_text(html_content)
             if not clean_text or len(clean_text) < 100:
-                return {"error": "Website has insufficient content", "confidence": 0.0}
+                logger.warning(f"Insufficient text content from {url} ({len(clean_text) if clean_text else 0} chars)")
+                return {"error": "Website has no readable content", "confidence": 0.0}
+
+            logger.info(f"Extracted clean text ({len(clean_text)} chars)")
 
             # Step 3: Use GPT-4o to extract structured data
             extracted_data = self._extract_with_gpt(clean_text, url)
 
-            # Step 4: Add domain info
+            if "error" in extracted_data:
+                logger.error(f"GPT extraction failed for {url}: {extracted_data.get('error')}")
+                return extracted_data
+
+            # Log extraction results
+            confidence = extracted_data.get("confidence", 0)
+            hotel_name = extracted_data.get("hotel_name", "NOT FOUND")
+            city = extracted_data.get("city", "NOT FOUND")
+            fields_found = len([k for k, v in extracted_data.items() if v and k != "confidence"])
+
+            logger.info(f"Website extraction from {url}:")
+            logger.info(f"  - Hotel: {hotel_name}")
+            logger.info(f"  - City: {city}")
+            logger.info(f"  - Confidence: {confidence}")
+            logger.info(f"  - Fields found: {fields_found}/10")
+
+            # Step 4: Add metadata
             extracted_data["source_url"] = url
             extracted_data["domain"] = urlparse(url).netloc
 
             return extracted_data
 
+        except requests.RequestException as e:
+            logger.error(f"Network error fetching {url}: {str(e)}")
+            return {"error": f"Network error: {str(e)}", "confidence": 0.0}
+
         except Exception as e:
-            return {
-                "error": f"Extraction failed: {str(e)}",
-                "confidence": 0.0
-            }
+            logger.error(f"Unexpected error extracting from {url}: {str(e)}", exc_info=True)
+            return {"error": f"Extraction failed: {str(e)}", "confidence": 0.0}
 
     def _fetch_html(self, url: str, timeout: int = 10) -> Optional[str]:
         """
@@ -105,8 +120,17 @@ class DataExtractor:
 
             return response.text
 
+        except requests.Timeout:
+            logger.error(f"Timeout fetching {url} (exceeded {timeout}s)")
+            return None
+        except requests.ConnectionError as e:
+            logger.error(f"Connection error fetching {url}: {str(e)}")
+            return None
+        except requests.HTTPError as e:
+            logger.error(f"HTTP error fetching {url}: {e.response.status_code}")
+            return None
         except requests.RequestException as e:
-            print(f"Error fetching {url}: {e}")
+            logger.error(f"Request error fetching {url}: {str(e)}")
             return None
 
     def _extract_clean_text(self, html_content: str) -> str:
@@ -151,36 +175,77 @@ class DataExtractor:
             Dict with extracted hotel data
         """
         prompt = f"""
-You are a data extraction expert. Extract hotel information from this website content.
+You are extracting hotel information from this website HTML.
 
 WEBSITE URL: {url}
 
 WEBSITE CONTENT:
 {text}
 
-Extract the following information in JSON format:
+Extract ONLY information that is explicitly stated. Do not guess or infer.
+
+REQUIRED FIELDS:
+1. hotel_name - The name of the hotel (look in <title>, <h1>, or header)
+2. address - Full street address (number, street, city, state/province, zip, country)
+3. city - City name only
+4. state - State or province (2-letter code if US/Canada, full name otherwise)
+5. country - Full country name
+6. phone - Phone number in any format
+7. email - Contact email address
+
+OPTIONAL FIELDS:
+8. description - Brief hotel description (1-2 sentences, from About or homepage)
+9. amenities - List of hotel amenities (pool, wifi, parking, etc.)
+10. room_types - Names of room categories mentioned (e.g., "Deluxe Suite", "Ocean View")
+
+IMPORTANT RULES:
+- If a field is not found, set it to null
+- For address: Look for "Address", "Location", "Visit Us", footer
+- For phone: Look for "Contact", "Call", "Reservations", phone icon
+- For email: Look for "Contact", "Email", "Reservations", email icon
+- For room_types: Look for "Rooms", "Accommodations", "Suites", "Stay"
+- For amenities: Look for "Amenities", "Features", "Facilities"
+- Extract EXACTLY as written on the website (don't reformat)
+- For US addresses: Extract state as 2-letter code (e.g., "FL", "CA", "NY")
+- For US/Canada: Country should be "United States" or "Canada" (not "US" or "USA")
+- Set confidence to 0.9 if all required fields found
+- Set confidence to 0.5 if 50% of required fields found
+- Set confidence to 0.0 if <50% of required fields found
+
+EXAMPLES:
+
+Example 1 - Complete data:
 {{
-    "hotel_name": "Exact hotel name (required)",
-    "address": "Street address if found",
-    "city": "City name (required)",
-    "country": "Country name (required)",
-    "zip_code": "Postal/ZIP code if found",
-    "phone": "Phone number if found",
-    "email": "Contact email if found",
-    "description": "Brief hotel description (1-2 sentences)",
-    "amenities": ["List of amenities mentioned"],
-    "room_types": ["List of room type names mentioned"],
-    "confidence": 0.0-1.0 (how confident are you in this extraction?)
+    "hotel_name": "Sunset Villa Resort",
+    "address": "123 Ocean Drive, Miami Beach, FL 33139, United States",
+    "city": "Miami Beach",
+    "state": "FL",
+    "country": "United States",
+    "phone": "(305) 555-1234",
+    "email": "info@sunsetvilla.com",
+    "description": "Luxury beachfront resort offering stunning ocean views and world-class amenities.",
+    "amenities": ["Pool", "Spa", "Restaurant", "Free WiFi", "Parking"],
+    "room_types": ["Ocean View Suite", "Deluxe King", "Standard Queen"],
+    "confidence": 0.9
 }}
 
-RULES:
-1. Only extract information that is clearly stated on the website
-2. For missing fields, use null
-3. Be conservative - don't guess
-4. confidence should reflect how clearly the information was stated
-5. hotel_name, city, country are required - set confidence to 0 if these are missing
+Example 2 - Partial data:
+{{
+    "hotel_name": "Mountain Lodge",
+    "address": null,
+    "city": "Denver",
+    "state": "CO",
+    "country": "United States",
+    "phone": null,
+    "email": null,
+    "description": null,
+    "amenities": ["Free Breakfast", "Parking"],
+    "room_types": null,
+    "confidence": 0.5
+}}
 
-Respond ONLY with valid JSON, no other text.
+Now extract from the actual website content above.
+Respond with ONLY valid JSON (no markdown, no extra text):
 """
 
         try:
@@ -215,8 +280,15 @@ Respond ONLY with valid JSON, no other text.
 
             return extracted
 
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON parsing error: {str(e)}")
+            logger.error(f"GPT response was: {response.choices[0].message.content[:200]}")
+            return {
+                "error": "Failed to parse GPT response as JSON",
+                "confidence": 0.0
+            }
         except Exception as e:
-            print(f"GPT extraction error: {e}")
+            logger.error(f"GPT extraction error: {str(e)}", exc_info=True)
             return {
                 "error": f"GPT extraction failed: {str(e)}",
                 "confidence": 0.0
