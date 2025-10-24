@@ -3,6 +3,27 @@ Project: Stayfull - AI-First Hotel Management Platform
 Initialized: 2025-10-22 19:03
 Status: ✅ ACTIVE - DJANGO + AI INFRASTRUCTURE
 
+## 🏛️ CORE PHILOSOPHY (READ FIRST)
+
+> **"Anything that can be done with AI, should be done by AI.
+> The user is the Validation Agent."**
+
+This is not a feature. **This is the foundation of the entire platform.**
+
+**Required Reading**:
+- 📖 `.architect/CORE_PHILOSOPHY.md` - Complete product philosophy
+- 📖 `.architect/patterns/AI_FIRST_VALIDATION_PATTERN.md` - Implementation pattern
+
+**Every feature MUST**:
+1. AI researches data automatically (don't ask user first)
+2. AI presents findings to user for validation
+3. User validates (approve/edit), never provides from scratch
+4. AI executes with validated data
+
+**This is non-negotiable architecture.**
+
+---
+
 ## 🎯 Mission Statement
 Build the world's first truly AI-automated hotel management platform with:
 - **21 integrated AI features** working in harmony
