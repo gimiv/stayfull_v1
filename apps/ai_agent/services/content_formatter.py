@@ -267,6 +267,79 @@ Now write the enhanced description:
             print(f"Enhancement error: {e}")
             return basic_description
 
+    def generate_hotel_description(
+        self,
+        hotel_name: str,
+        city: str,
+        state: str = None,
+        country: str = "United States"
+    ) -> str:
+        """
+        Generate a compelling hotel description from scratch (when user provides none).
+
+        Args:
+            hotel_name: Name of the hotel
+            city: City name
+            state: State (optional)
+            country: Country name
+
+        Returns:
+            2-3 sentence hotel description
+        """
+        location = f"{city}, {state}" if state else city
+
+        prompt = f"""
+You are writing a hotel description for a booking website.
+
+Hotel Name: {hotel_name}
+Location: {location}, {country}
+
+Write a 2-3 sentence hotel description that:
+1. Captures the essence of the location
+2. Highlights what makes this hotel special (infer from name + location)
+3. Uses inviting, warm language
+4. Avoids clichés like "perfect getaway" or "unforgettable experience"
+5. Focuses on guest experience
+
+Style: Airbnb-level quality, warm but professional.
+
+EXAMPLES:
+
+Input: "Sunset Villa", "Miami Beach", "FL"
+Output: "Escape to coastal luxury at Sunset Villa, where oceanfront elegance meets modern comfort in the heart of Miami Beach. Wake up to stunning sunrise views and spend your days lounging by our pool or exploring the vibrant Art Deco district just steps away."
+
+Input: "Mountain Lodge", "Denver", "CO"
+Output: "Experience Rocky Mountain hospitality at Mountain Lodge, your basecamp for alpine adventure in Denver. Whether you're here for skiing, hiking, or simply soaking in the mountain views, our cozy retreat offers the perfect blend of rustic charm and modern amenities."
+
+Write ONLY the description (no quotes, no extra text):
+"""
+
+        try:
+            response = self.client.chat.completions.create(
+                model=GPT4O_CONFIG["model"],
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a professional hotel copywriter. Write compelling, location-appropriate descriptions."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                temperature=0.7,
+                max_tokens=150
+            )
+
+            return response.choices[0].message.content.strip()
+
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to generate hotel description: {str(e)}")
+            # Fallback to simple description
+            return f"Welcome to {hotel_name}, located in {location}. Experience comfort and hospitality in the heart of {city}."
+
     def set_tone(self, tone: str):
         """
         Set the tone for content generation.

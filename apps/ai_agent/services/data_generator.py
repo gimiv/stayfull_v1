@@ -18,6 +18,7 @@ from apps.ai_agent.models import NoraContext
 from datetime import time as datetime_time
 import re
 import logging
+from .content_formatter import ContentFormatter
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,7 @@ class DataGenerator:
     def __init__(self, user, organization: Organization):
         self.user = user
         self.organization = organization
+        self.content_formatter = ContentFormatter()
 
     def _parse_time(self, time_str: str) -> datetime_time:
         """
@@ -236,12 +238,27 @@ class DataGenerator:
                 qty = int(field_values.get(f'room_type_{i}_quantity', 0))
                 total_rooms_count += qty
 
+        # Hotel description - generate if not provided
+        hotel_description = field_values.get('description', field_values.get('hotel_description'))
+
+        if not hotel_description or len(hotel_description.strip()) < 20:
+            # Generate AI description from hotel name + location
+            logger.info(f"Generating hotel description for {hotel_name}...")
+            hotel_description = self.content_formatter.generate_hotel_description(
+                hotel_name=hotel_name,
+                city=address['city'],
+                state=address['state'],
+                country=address['country']
+            )
+            logger.info(f"Generated description: {hotel_description[:100]}...")
+
         # Create Hotel
         hotel = Hotel.objects.create(
             organization=self.organization,
             name=hotel_name,
             slug=slug,
             type=hotel_type,
+            description=hotel_description,
             address=address,
             contact=contact,
             timezone=timezone_str,
@@ -275,8 +292,23 @@ class DataGenerator:
                 name = room_data.get('type', room_data.get('name', f'Room Type {idx}'))
                 base_price = float(room_data.get('price', room_data.get('base_price', 100.00)))
 
-                # Use defaults for fields not collected in basic onboarding
-                description = f'{name} at {hotel.name}'
+                # Get or generate room description
+                description = room_data.get('description', f'{name} at {hotel.name}')
+
+                # AI-enhance room description
+                logger.info(f"Enhancing description for {name}...")
+                enhanced_description = self.content_formatter.enhance_room_description(
+                    basic_description=description,
+                    room_type_name=name,
+                    context={
+                        'hotel_name': hotel.name,
+                        'city': hotel.address.get('city', ''),
+                        'amenities': room_data.get('amenities', []),
+                        'max_occupancy': room_data.get('occupancy', room_data.get('max_occupancy', 2))
+                    }
+                )
+                description = enhanced_description
+
                 max_occupancy = room_data.get('occupancy', room_data.get('max_occupancy', 2))
 
                 # Code (short code like 'STD', 'DLX', 'SUI')
@@ -322,9 +354,26 @@ class DataGenerator:
 
             for i in range(1, num_types + 1):
                 name = field_values.get(f'room_type_{i}_name', f'Room Type {i}')
-                description = field_values.get(f'room_type_{i}_description', f'{name} at {hotel.name}')
+                basic_description = field_values.get(f'room_type_{i}_description', f'{name} at {hotel.name}')
                 base_price = float(field_values.get(f'room_type_{i}_base_price', 100.00))
                 max_occupancy = int(field_values.get(f'room_type_{i}_max_occupancy', 2))
+
+                # AI-enhance room description
+                amenities = field_values.get(f'room_type_{i}_amenities', [])
+                if isinstance(amenities, str):
+                    amenities = [a.strip() for a in amenities.split(',')]
+
+                logger.info(f"Enhancing description for {name}...")
+                description = self.content_formatter.enhance_room_description(
+                    basic_description=basic_description,
+                    room_type_name=name,
+                    context={
+                        'hotel_name': hotel.name,
+                        'city': hotel.address.get('city', ''),
+                        'amenities': amenities,
+                        'max_occupancy': max_occupancy
+                    }
+                )
                 bed_type = field_values.get(f'room_type_{i}_beds', '1 Queen')
 
                 code = name[:3].upper() if len(name) >= 3 else name.upper()
@@ -337,10 +386,6 @@ class DataGenerator:
                     'type': bed_type,
                     'description': bed_type
                 }
-
-                amenities = field_values.get(f'room_type_{i}_amenities', [])
-                if isinstance(amenities, str):
-                    amenities = [a.strip() for a in amenities.split(',')]
 
                 room_type = RoomType.objects.create(
                     hotel=hotel,
