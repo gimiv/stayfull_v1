@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <title>{% block title %}Stayfull - Hotel Management System{% endblock %}</title>
+
+    <!-- Tailwind CSS (for consistent styling) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Block for additional CSS -->
+    {% block extra_css %}{% endblock %}
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}" />
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+    <!-- Navigation Bar (if needed) -->
+    {% block navbar %}
+    <!-- Add your navigation here -->
+    {% endblock %}
+
+    <!-- Main Content -->
+    <main class="{% block main_class %}container mx-auto px-4 py-8{% endblock %}">
+        {% block content %}
+        <!-- Page content goes here -->
+        {% endblock %}
+    </main>
+
+    <!-- Footer (if needed) -->
+    {% block footer %}
+    {% endblock %}
+
+    <!-- Global Nora AI Assistant Icon (Phase 6) -->
+    {% include 'ai_agent/partials/global_nora_icon.html' %}
+
+    <!-- Block for additional JavaScript -->
+    {% block extra_js %}{% endblock %}
+
+</body>
+</html>

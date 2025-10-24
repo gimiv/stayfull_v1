@@ -53,9 +53,20 @@
                     <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">
                         Meet Nora
                     </h1>
-                    <p class="text-xl text-white/90">
+                    <p class="text-xl text-white/90 mb-6">
                         Your AI co-worker who gets hotels online in 10 minutes
                     </p>
+
+                    <!-- Video Introduction Button -->
+                    <button
+                        onclick="playIntroVideo()"
+                        class="inline-flex items-center px-6 py-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold rounded-lg transition-all transform hover:scale-105 border-2 border-white/40"
+                    >
+                        <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"/>
+                        </svg>
+                        <span class="animate-pulse">▶ Play Me First</span>
+                    </button>
                 </div>
 
                 <!-- Content -->
@@ -172,7 +183,210 @@
         </div>
     </div>
 
+    <!-- Video Modal -->
+    <div id="video-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <!-- Backdrop -->
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeVideoModal()"></div>
+
+            <!-- Modal Content -->
+            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
+
+                <!-- Header -->
+                <div class="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4 flex items-center justify-between">
+                    <h3 class="text-xl font-bold text-white flex items-center">
+                        <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"/>
+                        </svg>
+                        Welcome from Nora
+                    </h3>
+                    <button onclick="closeVideoModal()" class="text-white/80 hover:text-white transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Video Content -->
+                <div class="p-8">
+                    <!-- Animated Nora Avatar -->
+                    <div class="text-center mb-6">
+                        <div class="inline-block relative">
+                            <div class="w-32 h-32 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-6xl shadow-lg animate-pulse">
+                                🤖
+                            </div>
+                            <!-- Audio waves animation -->
+                            <div id="audio-waves" class="hidden absolute -bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-1">
+                                <div class="w-1 bg-blue-500 rounded-full animate-wave" style="animation-delay: 0s; height: 16px;"></div>
+                                <div class="w-1 bg-blue-500 rounded-full animate-wave" style="animation-delay: 0.1s; height: 24px;"></div>
+                                <div class="w-1 bg-blue-500 rounded-full animate-wave" style="animation-delay: 0.2s; height: 20px;"></div>
+                                <div class="w-1 bg-blue-500 rounded-full animate-wave" style="animation-delay: 0.3s; height: 28px;"></div>
+                                <div class="w-1 bg-blue-500 rounded-full animate-wave" style="animation-delay: 0.4s; height: 16px;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Message -->
+                    <div id="intro-message" class="bg-gray-50 rounded-lg p-6 mb-6 border border-gray-200">
+                        <p class="text-gray-700 leading-relaxed text-center" id="intro-text">
+                            <!-- Text will be typed here -->
+                        </p>
+                    </div>
+
+                    <!-- Controls -->
+                    <div class="flex justify-center space-x-4">
+                        <button
+                            id="play-audio-btn"
+                            onclick="playIntroAudio()"
+                            class="flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+                        >
+                            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"/>
+                            </svg>
+                            Listen to Nora
+                        </button>
+                        <button
+                            onclick="skipToStart()"
+                            class="flex items-center px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition-colors"
+                        >
+                            Skip to Onboarding
+                            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        @keyframes wave {
+            0%, 100% { transform: scaleY(1); }
+            50% { transform: scaleY(1.5); }
+        }
+
+        .animate-wave {
+            animation: wave 0.6s ease-in-out infinite;
+        }
+
+        @keyframes typing {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+
+        .typing-text {
+            overflow: hidden;
+            white-space: nowrap;
+            display: inline-block;
+            animation: typing 3s steps(60, end);
+        }
+    </style>
+
     <script>
+        // Intro video/audio functionality
+        const introMessage = `Hi there! I'm Nora, your AI co-worker at Stayfull. I'm here to help you get your hotel online in just 10 minutes. Here's what we'll do together: First, I'll gather your hotel's basic information. Then, we'll set up your rooms and pricing. Finally, I'll help you create professional policies and descriptions. The best part? You can talk to me anytime - whether it's for onboarding, daily operations, or just questions about how things work. Ready to get started? Let's build something amazing together!`;
+
+        let currentAudio = null;
+
+        function playIntroVideo() {
+            const modal = document.getElementById('video-modal');
+            modal.classList.remove('hidden');
+
+            // Type out the message
+            typeMessage();
+        }
+
+        function closeVideoModal() {
+            const modal = document.getElementById('video-modal');
+            modal.classList.add('hidden');
+
+            // Stop audio if playing
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+
+            // Hide audio waves
+            document.getElementById('audio-waves').classList.add('hidden');
+        }
+
+        function typeMessage() {
+            const textElement = document.getElementById('intro-text');
+            let index = 0;
+
+            textElement.textContent = '';
+
+            function type() {
+                if (index < introMessage.length) {
+                    textElement.textContent += introMessage[index];
+                    index++;
+                    setTimeout(type, 20); // Typing speed
+                }
+            }
+
+            type();
+        }
+
+        async function playIntroAudio() {
+            const btn = document.getElementById('play-audio-btn');
+            const audioWaves = document.getElementById('audio-waves');
+
+            // Show loading state
+            btn.disabled = true;
+            btn.innerHTML = '<svg class="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Generating...';
+
+            try {
+                // Call backend to generate voice
+                const response = await fetch('/nora/api/voice/generate/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        text: introMessage
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // Play audio from base64
+                    const audio = new Audio('data:audio/mp3;base64,' + data.audio_base64);
+                    currentAudio = audio;
+
+                    // Show audio waves
+                    audioWaves.classList.remove('hidden');
+
+                    audio.onended = () => {
+                        audioWaves.classList.add('hidden');
+                        btn.disabled = false;
+                        btn.innerHTML = '<svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"/></svg> Listen Again';
+                    };
+
+                    audio.play();
+
+                    btn.innerHTML = '<svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg> Playing...';
+                } else {
+                    alert('Voice generation failed. Please try again.');
+                    btn.disabled = false;
+                    btn.innerHTML = '<svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"/></svg> Listen to Nora';
+                }
+            } catch (error) {
+                console.error('Error generating audio:', error);
+                alert('Something went wrong. Please try again.');
+                btn.disabled = false;
+                btn.innerHTML = '<svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"/></svg> Listen to Nora';
+            }
+        }
+
+        function skipToStart() {
+            closeVideoModal();
+            // Auto-trigger the main CTA
+            startOnboarding(new Event('click'));
+        }
+
         async function startOnboarding(event) {
             event.preventDefault();
 

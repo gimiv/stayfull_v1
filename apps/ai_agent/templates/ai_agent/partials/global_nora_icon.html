@@ -1,0 +1,342 @@
+<!-- Global Nora Icon - Floating Action Button (FAB) -->
+<!-- Include this in your base template to make Nora accessible system-wide -->
+
+<style>
+    @keyframes nora-pulse {
+        0%, 100% {
+            transform: scale(1);
+            box-shadow: 0 10px 25px -5px rgba(99, 91, 255, 0.3);
+        }
+        50% {
+            transform: scale(1.05);
+            box-shadow: 0 15px 30px -5px rgba(99, 91, 255, 0.5);
+        }
+    }
+
+    @keyframes nora-notification {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.2); opacity: 0.8; }
+    }
+
+    .nora-fab {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #635BFF 0%, #A45EFF 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 1000;
+        transition: all 0.3s ease;
+        animation: nora-pulse 3s ease-in-out infinite;
+    }
+
+    .nora-fab:hover {
+        transform: scale(1.1) rotate(15deg);
+        box-shadow: 0 20px 35px -5px rgba(99, 91, 255, 0.6);
+    }
+
+    .nora-fab-icon {
+        font-size: 32px;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    }
+
+    .nora-notification-badge {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        width: 20px;
+        height: 20px;
+        background: #EF4444;
+        border-radius: 50%;
+        border: 3px solid white;
+        animation: nora-notification 1s ease-in-out infinite;
+    }
+
+    .nora-quick-chat {
+        position: fixed;
+        bottom: 100px;
+        right: 24px;
+        width: 380px;
+        max-width: calc(100vw - 48px);
+        height: 600px;
+        max-height: calc(100vh - 140px);
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        z-index: 999;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        transform: scale(0);
+        transform-origin: bottom right;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .nora-quick-chat.open {
+        transform: scale(1);
+    }
+
+    .nora-chat-header {
+        background: linear-gradient(135deg, #635BFF 0%, #A45EFF 100%);
+        padding: 16px;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .nora-chat-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+        background: #F9FAFB;
+    }
+
+    .nora-chat-input-area {
+        padding: 16px;
+        border-top: 1px solid #E5E7EB;
+        background: white;
+    }
+
+    .nora-chat-message {
+        margin-bottom: 12px;
+        animation: slideInUp 0.3s ease-out;
+    }
+
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 640px) {
+        .nora-quick-chat {
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 0;
+        }
+
+        .nora-fab {
+            bottom: 16px;
+            right: 16px;
+        }
+    }
+</style>
+
+<!-- Floating Action Button -->
+<div
+    id="nora-fab"
+    class="nora-fab"
+    onclick="toggleNoraChat()"
+    title="Chat with Nora"
+    role="button"
+    aria-label="Open Nora AI Assistant"
+>
+    <span class="nora-fab-icon">🤖</span>
+    <!-- Notification badge (show when there's a message) -->
+    <span id="nora-notification" class="nora-notification-badge hidden"></span>
+</div>
+
+<!-- Quick Chat Window -->
+<div id="nora-quick-chat" class="nora-quick-chat">
+    <!-- Header -->
+    <div class="nora-chat-header">
+        <div class="flex items-center">
+            <span class="text-2xl mr-3">🤖</span>
+            <div>
+                <h3 class="font-semibold text-lg">Nora AI</h3>
+                <p class="text-xs text-white/80">Always here to help</p>
+            </div>
+        </div>
+        <button
+            onclick="toggleNoraChat()"
+            class="text-white/80 hover:text-white transition-colors"
+            aria-label="Close chat"
+        >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Chat Body -->
+    <div id="nora-chat-body" class="nora-chat-body">
+        <!-- Initial greeting -->
+        <div class="nora-chat-message">
+            <div class="bg-white rounded-lg p-4 shadow-sm max-w-[85%]">
+                <p class="text-sm text-gray-700">
+                    👋 Hi! I'm Nora. How can I help you today?
+                </p>
+                <div class="mt-3 flex flex-wrap gap-2">
+                    <button onclick="quickAction('status')" class="text-xs px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors">
+                        Check Status
+                    </button>
+                    <button onclick="quickAction('help')" class="text-xs px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors">
+                        Get Help
+                    </button>
+                    <button onclick="quickAction('onboarding')" class="text-xs px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors">
+                        Continue Onboarding
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="nora-chat-input-area">
+        <form onsubmit="sendQuickMessage(event)" class="flex space-x-2">
+            <input
+                type="text"
+                id="nora-quick-input"
+                placeholder="Ask me anything..."
+                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            />
+            <button
+                type="submit"
+                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+                aria-label="Send message"
+            >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                </svg>
+            </button>
+        </form>
+        <p class="text-xs text-gray-400 mt-2 text-center">
+            Press Enter to send • <a href="/nora/chat/" class="text-blue-600 hover:underline">Full Conversation</a>
+        </p>
+    </div>
+</div>
+
+<script>
+    // Global Nora Chat functionality
+    function toggleNoraChat() {
+        const chat = document.getElementById('nora-quick-chat');
+        chat.classList.toggle('open');
+
+        // Hide notification when opened
+        if (chat.classList.contains('open')) {
+            document.getElementById('nora-notification').classList.add('hidden');
+            // Focus input
+            setTimeout(() => {
+                document.getElementById('nora-quick-input').focus();
+            }, 300);
+        }
+    }
+
+    async function sendQuickMessage(event) {
+        event.preventDefault();
+
+        const input = document.getElementById('nora-quick-input');
+        const message = input.value.trim();
+
+        if (!message) return;
+
+        // Add user message to chat
+        addNoraMessage('user', message);
+
+        // Clear input
+        input.value = '';
+
+        // Show loading
+        const loadingId = addNoraMessage('assistant', '...', true);
+
+        try {
+            const response = await fetch('/nora/api/message/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ message: message })
+            });
+
+            const data = await response.json();
+
+            // Remove loading
+            document.getElementById(loadingId).remove();
+
+            // Add Nora's response
+            addNoraMessage('assistant', data.message);
+
+        } catch (error) {
+            console.error('Error:', error);
+            document.getElementById(loadingId).remove();
+            addNoraMessage('assistant', "Sorry, I'm having trouble right now. Please try again.");
+        }
+    }
+
+    function addNoraMessage(role, content, isLoading = false) {
+        const chatBody = document.getElementById('nora-chat-body');
+        const messageDiv = document.createElement('div');
+        const messageId = 'msg-' + Date.now();
+        messageDiv.id = messageId;
+        messageDiv.className = 'nora-chat-message';
+
+        const alignClass = role === 'user' ? 'ml-auto' : '';
+        const bgClass = role === 'user' ? 'bg-blue-600 text-white' : 'bg-white shadow-sm';
+        const textClass = role === 'user' ? 'text-white' : 'text-gray-700';
+
+        messageDiv.innerHTML = `
+            <div class="${alignClass} max-w-[85%] rounded-lg p-3 ${bgClass}">
+                <p class="text-sm ${textClass} ${isLoading ? 'animate-pulse' : ''}">${content}</p>
+            </div>
+        `;
+
+        chatBody.appendChild(messageDiv);
+        chatBody.scrollTop = chatBody.scrollHeight;
+
+        return messageId;
+    }
+
+    function quickAction(action) {
+        switch(action) {
+            case 'status':
+                sendQuickMessage({ preventDefault: () => {}, target: { querySelector: () => ({ value: 'What is my current onboarding status?' }) } });
+                document.getElementById('nora-quick-input').value = 'What is my current onboarding status?';
+                sendQuickMessage(new Event('submit'));
+                break;
+            case 'help':
+                sendQuickMessage({ preventDefault: () => {}, target: { querySelector: () => ({ value: 'How can you help me?' }) } });
+                document.getElementById('nora-quick-input').value = 'How can you help me?';
+                sendQuickMessage(new Event('submit'));
+                break;
+            case 'onboarding':
+                window.location.href = '/nora/chat/';
+                break;
+        }
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Optional: Show notification after page load (for demo)
+    // setTimeout(() => {
+    //     document.getElementById('nora-notification').classList.remove('hidden');
+    // }, 3000);
+</script>
