@@ -2,6 +2,8 @@
 Main Nora Agent service - orchestrates all AI interactions
 """
 
+import asyncio
+import json
 from typing import Dict, Optional
 from django.contrib.auth.models import User
 from apps.ai_agent.models import NoraContext
@@ -12,6 +14,7 @@ from .intent_detector import IntentDetector, Intent
 from .data_extractor import DataExtractor
 from .content_formatter import ContentFormatter
 from .google_places_service import GooglePlacesService
+from .research_orchestrator import ResearchOrchestrator
 
 
 class NoraAgent:
@@ -196,6 +199,8 @@ class NoraAgent:
         """
         Handle message during onboarding flow.
 
+        Routes to AI-First flow if enabled, otherwise uses traditional Q&A.
+
         Args:
             user_message: User's message
 
@@ -203,6 +208,11 @@ class NoraAgent:
             Response dict
         """
         try:
+            # Check if AI-First mode is enabled (F-002.3)
+            if self.context.task_state.get('ai_first_mode'):
+                return self.process_message_ai_first(user_message)
+
+            # Traditional Q&A flow (fallback)
             # Initialize onboarding engine with current state
             engine = OnboardingEngine(self.context.task_state)
 
@@ -244,6 +254,9 @@ class NoraAgent:
                 return self._handle_unclear(user_message, engine)
 
         except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error in onboarding message handler: {str(e)}", exc_info=True)
             return {
                 "message": "I'm having trouble processing that. Let's try again - what would you like to tell me?",
                 "data": {"error": str(e)},
@@ -672,24 +685,30 @@ CRITICAL: Use null (not "null" string) for missing data.
 
     def start_onboarding(self) -> Dict:
         """
-        Start the onboarding process.
+        Start the onboarding process with AI-First pattern (F-002.3).
 
-        Returns initial greeting and first question.
+        Returns initial greeting asking for hotel name + city only.
         """
         self.context.set_active_task(
             task="onboarding",
-            initial_state={"step": "hotel_basics", "progress_percentage": 0}
+            initial_state={
+                "ai_first_step": "hotel_identity",  # Changed from 'step' to avoid enum conflict
+                "progress_percentage": 0,
+                "ai_first_mode": True  # Enable AI-First pattern
+            }
         )
 
         initial_message = (
-            "Let's get you going! Can you tell me what the name of your hotel is and what city it's located in?"
+            "Let's get you started! 🚀\n\n"
+            "I just need your hotel name and city, and I'll automatically research and pre-fill everything else for you.\n\n"
+            "What's your hotel called and where is it located?"
         )
 
         self.context.add_message(role="assistant", content=initial_message)
 
         return {
             "message": initial_message,
-            "data": {"step": "hotel_basics", "progress": 0},
+            "data": {"ai_first_step": "hotel_identity", "progress": 0, "ai_first": True},
             "action": "show_progress"
         }
 
@@ -702,4 +721,246 @@ CRITICAL: Use null (not "null" string) for missing data.
             "task_state": self.context.task_state,
             "message_count": len(self.context.conversation_history),
             "last_interaction": self.context.last_interaction_at.isoformat() if self.context.last_interaction_at else None
+        }
+
+    # ========================================================================
+    # AI-FIRST ONBOARDING FLOW (F-002.3)
+    # ========================================================================
+
+    def _extract_hotel_identity(self, user_message: str) -> Dict:
+        """
+        Extract hotel name and city from user message using GPT-4o.
+
+        Returns:
+            {
+                "hotel_name": str,
+                "city": str,
+                "state": str (optional)
+            }
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+
+        try:
+            response = self.client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "Extract hotel name and location from user input. Return JSON with fields: hotel_name, city, state (use 2-letter code like NY, CA). If state not mentioned, omit it."
+                    },
+                    {
+                        "role": "user",
+                        "content": f"Extract hotel info from: '{user_message}'"
+                    }
+                ],
+                temperature=0.1,
+                max_tokens=200,
+                response_format={"type": "json_object"}
+            )
+
+            content = response.choices[0].message.content.strip()
+            result = json.loads(content) if isinstance(content, str) else content
+
+            logger.info(f"Extracted identity: {result}")
+            return result
+
+        except Exception as e:
+            logger.error(f"Error extracting hotel identity: {str(e)}")
+            return {}
+
+    async def _start_auto_research(self) -> Dict:
+        """
+        Start automatic hotel research using ResearchOrchestrator.
+
+        This is the core of AI-First pattern:
+        1. Get hotel name + city from task_state
+        2. Launch 6-source research
+        3. Store results
+        4. Show validation UI
+
+        Returns response dict with research results and validation action.
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+
+        hotel_name = self.context.task_state.get('hotel_name')
+        city = self.context.task_state.get('city')
+        state = self.context.task_state.get('state')
+
+        if not hotel_name or not city:
+            return {
+                "message": "I need your hotel name and city to get started. What are they?",
+                "action": "collect_identity"
+            }
+
+        # Create orchestrator (F-002.3 Phase 4.2: Pass context for progress tracking)
+        orchestrator = ResearchOrchestrator(context=self.context)
+
+        # Build progress message
+        progress_message = f"🔍 Researching **{hotel_name}** in {city}...\n\n"
+        progress_message += "I'm gathering data from multiple sources:\n"
+        progress_message += "• Google Places (verified business data)\n"
+        progress_message += "• Perplexity AI (web research)\n"
+        progress_message += "• OpenAI (additional research)\n"
+        progress_message += "• Website scraping\n\n"
+        progress_message += "This will take about 15-20 seconds..."
+
+        # Store progress message (use sync_to_async for Django ORM)
+        from asgiref.sync import sync_to_async
+        await sync_to_async(self.context.add_message)(role="assistant", content=progress_message)
+
+        logger.info(f"🔍 Starting auto-research for {hotel_name}, {city}, {state}")
+
+        try:
+            # Do research (async) with 90s timeout
+            complete_data = await asyncio.wait_for(
+                orchestrator.research_hotel(hotel_name, city, state),
+                timeout=90.0
+            )
+
+            # Store in task_state (sync operation)
+            def update_task_state():
+                self.context.task_state['_research_data'] = complete_data
+                self.context.task_state['_research_complete'] = True
+                self.context.task_state['current_validation_category'] = 'location'
+
+                # Merge research data into task_state for easy access
+                for key, value in complete_data.items():
+                    if not key.startswith('_'):  # Don't overwrite metadata fields
+                        self.context.task_state[key] = value
+
+                self.context.save()
+
+            await sync_to_async(update_task_state)()
+
+            confidence = complete_data.get('_overall_confidence', 0)
+            sources_used = complete_data.get('_sources_used', [])
+
+            logger.info(f"✅ Research complete: {confidence:.0%} confidence, {len(sources_used)} sources")
+
+            # Success message
+            success_message = f"✅ Research complete!\n\n"
+            success_message += f"**Confidence**: {confidence:.0%}\n"
+            success_message += f"**Sources**: {', '.join(sources_used)}\n\n"
+            success_message += "Let's validate what I found, starting with your location..."
+
+            await sync_to_async(self.context.add_message)(role="assistant", content=success_message)
+
+            return {
+                "message": success_message,
+                "action": "show_validation",
+                "category": "location",
+                "data": complete_data
+            }
+
+        except asyncio.TimeoutError:
+            # Research took too long (>90s)
+            logger.warning(f"⏱️ Research timeout for {hotel_name} (exceeded 90s)")
+
+            # Store timeout status for debugging
+            def store_timeout():
+                self.context.task_state['_research_timeout'] = True
+                self.context.task_state['_research_failed'] = True
+                self.context.save()
+
+            await sync_to_async(store_timeout)()
+
+            # Clear, helpful message to user
+            timeout_message = f"I'm taking longer than expected to research {hotel_name}. "
+            timeout_message += "No worries - let's just go through the details together step by step.\n\n"
+            timeout_message += "What's your hotel's full address?"
+
+            await sync_to_async(self.context.add_message)(role="assistant", content=timeout_message)
+
+            return {
+                "message": timeout_message,
+                "action": "manual_fallback",
+                "error": "timeout"
+            }
+
+        except Exception as e:
+            # General research failure (API error, network issue, etc.)
+            logger.error(f"❌ Research failed: {str(e)}", exc_info=True)
+
+            # Store failure status for debugging
+            def store_failure():
+                self.context.task_state['_research_failed'] = True
+                self.context.task_state['_research_error'] = str(e)
+                self.context.save()
+
+            await sync_to_async(store_failure)()
+
+            # Fallback to manual onboarding with clear message
+            fallback_message = f"I had trouble finding information about {hotel_name} online. "
+            fallback_message += "That's totally fine - many smaller properties aren't indexed yet!\n\n"
+            fallback_message += "Let's just enter the details together. What's your hotel's full address?"
+
+            await sync_to_async(self.context.add_message)(role="assistant", content=fallback_message)
+
+            return {
+                "message": fallback_message,
+                "action": "manual_fallback",
+                "error": "research_failed"
+            }
+
+    def process_message_ai_first(self, user_message: str) -> Dict:
+        """
+        Process message using AI-First pattern (F-002.3).
+
+        Flow:
+        1. Extract hotel name + city (only input needed)
+        2. Auto-research with 6 sources
+        3. Show validation screens
+        4. Complete onboarding
+
+        Returns response dict.
+        """
+        import logging
+        import json
+        logger = logging.getLogger(__name__)
+
+        # Add user message to context
+        self.context.add_message(role="user", content=user_message)
+
+        # Check if we already have research data
+        if self.context.task_state.get('_research_complete'):
+            # User is validating categories - this is handled by validation endpoint
+            return {
+                "message": "Please use the validation interface to approve or edit the data.",
+                "action": "continue_validation"
+            }
+
+        # Check if we have hotel identity
+        if not self.context.task_state.get('hotel_name'):
+            # Extract hotel identity from message
+            extracted = self._extract_hotel_identity(user_message)
+
+            if extracted.get('hotel_name') and extracted.get('city'):
+                # Got what we need! Store and start research
+                self.context.task_state['hotel_name'] = extracted['hotel_name']
+                self.context.task_state['city'] = extracted['city']
+                if extracted.get('state'):
+                    self.context.task_state['state'] = extracted['state']
+                self.context.save()
+
+                logger.info(f"✓ Extracted: {extracted['hotel_name']}, {extracted['city']}")
+
+                # Trigger AI research (async)
+                # Use Django's async-safe approach
+                from asgiref.sync import async_to_sync
+                return async_to_sync(self._start_auto_research)()
+            else:
+                # Need more info
+                response = "I need your hotel name and city to get started. For example: 'Plaza Hotel in New York' or 'Ace Hotel, Portland OR'"
+                self.context.add_message(role="assistant", content=response)
+                return {
+                    "message": response,
+                    "action": "collect_identity"
+                }
+
+        # Default response
+        return {
+            "message": "Let's continue...",
+            "action": None
         }
